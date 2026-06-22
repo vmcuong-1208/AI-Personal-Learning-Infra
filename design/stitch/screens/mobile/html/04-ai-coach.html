@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Coach - LearnFlow AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .ai-sparkle-glow {
+            box-shadow: inset 0 0 12px rgba(111, 61, 217, 0.1), 0 0 20px rgba(111, 61, 217, 0.05);
+        }
+        .message-gradient-bot {
+            background: linear-gradient(135deg, #f2f3ff 0%, #e2e7ff 100%);
+        }
+        .glass-panel {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+        /* Custom Scrollbar for Chat */
+        .chat-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chat-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-scroll::-webkit-scrollbar-thumb {
+            background: #e2dfff;
+            border-radius: 10px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#dae2fd",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#571ac0",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed": "#23005c",
+                        "background": "#faf8ff",
+                        "on-secondary-container": "#00714d",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "surface-container-low": "#f2f3ff",
+                        "on-primary-fixed": "#0f0069",
+                        "primary": "#3525cd",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#e3d5ff",
+                        "inverse-primary": "#c3c0ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#002113",
+                        "outline": "#777587",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#005236",
+                        "primary-fixed": "#e2dfff",
+                        "surface-container-high": "#e2e7ff",
+                        "secondary-container": "#6cf8bb",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#d0bcff",
+                        "surface": "#faf8ff",
+                        "secondary": "#006c49",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "on-tertiary-fixed-variant": "#5516be",
+                        "primary-container": "#4f46e5",
+                        "tertiary-container": "#6f3dd9",
+                        "surface-container": "#eaedff",
+                        "outline-variant": "#c7c4d8",
+                        "surface-bright": "#faf8ff",
+                        "inverse-surface": "#283044",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-surface-variant": "#464555",
+                        "surface-tint": "#4d44e3",
+                        "secondary-fixed-dim": "#4edea3",
+                        "surface-container-highest": "#dae2fd",
+                        "on-surface": "#131b2e",
+                        "inverse-on-surface": "#eef0ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "container-max": "1200px",
+                        "card-padding": "20px",
+                        "margin-desktop": "40px"
+                    },
+                    "fontFamily": {
+                        "display": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-mono": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "26px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md text-body-md overflow-hidden h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop h-14 z-50 fixed top-0">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer active:scale-95" data-icon="menu">menu</span>
+<h1 class="font-display text-display text-primary dark:text-primary-fixed-dim tracking-tight text-xl">LearnFlow AI</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex gap-6 items-center">
+<span class="text-on-surface-variant font-body-md hover:bg-surface-container-high transition-colors cursor-pointer px-2 py-1 rounded">Courses</span>
+<span class="text-on-surface-variant font-body-md hover:bg-surface-container-high transition-colors cursor-pointer px-2 py-1 rounded">Community</span>
+<span class="text-primary font-semibold font-body-md transition-colors cursor-pointer px-2 py-1 rounded">AI Coach</span>
+</div>
+<span class="material-symbols-outlined text-primary cursor-pointer active:scale-95" data-icon="notifications">notifications</span>
+</div>
+</header>
+<!-- Main Content Layout -->
+<main class="flex-1 flex pt-14 pb-16 md:pb-0 md:pl-0">
+<!-- NavigationDrawer (Hidden on mobile, visible on desktop) -->
+<aside class="hidden md:flex flex-col h-full py-6 bg-surface-container-low dark:bg-surface-container-highest border-r border-outline-variant shadow-xl w-80 shrink-0">
+<div class="px-6 mb-8 flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-primary-fixed">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a young creative professional with a warm smile, set against a blurred, high-end office environment with soft natural lighting. The style is clean, modern, and trustworthy, with high-fidelity detail and a focus on clarity and professional confidence." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGKuqb5sFDf0R3Ss0vsfOpDnl7sqEeItbSgMj-QIA06MZnnJPmpEFfzn8aP-6oC_VdfYJgrQfJkM2vt-jpZNiyA0xjXkBSdSEoqeVi4vA5TN8EbimJy1PG9A8YpTsXojeMzJwsot6Dmr_dnDQc4ob66rYFRq6iguzaSFZa-KoULO3wxVTNPxjnVhjdchXWoWN3kjrZIMuJC5u2qUp7tFtOvB726A1Ut2_fSZh2GfZsLWqeLiv59RGQ2vBPruVdW1lcEMr6N14O4zhB"/>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-primary">Alex Learner</h3>
+<p class="text-on-surface-variant text-xs flex items-center gap-1">
+                        Pro Member <span class="text-tertiary-container font-bold text-[10px] tracking-widest uppercase">SCANNING...</span>
+</p>
+</div>
+</div>
+<nav class="flex-1">
+<ul class="space-y-1">
+<li><a class="flex items-center gap-4 px-6 py-3 text-on-surface-variant hover:pl-6 transition-all duration-300 hover:bg-surface-variant" href="#"><span class="material-symbols-outlined" data-icon="add_circle">add_circle</span> New Entry</a></li>
+<li><a class="flex items-center gap-4 px-6 py-3 text-on-surface-variant hover:pl-6 transition-all duration-300 hover:bg-surface-variant" href="#"><span class="material-symbols-outlined" data-icon="psychology">psychology</span> Reflections</a></li>
+<li><a class="flex items-center gap-4 px-6 py-3 text-on-surface-variant hover:pl-6 transition-all duration-300 hover:bg-surface-variant" href="#"><span class="material-symbols-outlined" data-icon="library_books">library_books</span> Library</a></li>
+<li><a class="flex items-center gap-4 px-6 py-3 bg-primary-container text-on-primary-container font-semibold rounded-r-full" href="#"><span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span> AI Coach</a></li>
+<li><a class="flex items-center gap-4 px-6 py-3 text-on-surface-variant hover:pl-6 transition-all duration-300 hover:bg-surface-variant" href="#"><span class="material-symbols-outlined" data-icon="settings">settings</span> Settings</a></li>
+</ul>
+</nav>
+</aside>
+<!-- Chat Container -->
+<div class="flex-1 flex flex-col md:flex-row relative">
+<!-- Chat Feed -->
+<div class="flex-1 flex flex-col h-full bg-white relative">
+<!-- Messages Area -->
+<div class="flex-1 overflow-y-auto px-margin-mobile md:px-margin-desktop py-8 chat-scroll flex flex-col gap-6">
+<!-- Bot Message -->
+<div class="flex gap-4 max-w-3xl">
+<div class="w-8 h-8 rounded-lg bg-tertiary-container flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-on-tertiary-container text-sm" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="message-gradient-bot p-4 rounded-2xl rounded-tl-none border border-outline-variant ai-sparkle-glow">
+<p class="text-on-background leading-relaxed">Good morning, Alex. I've analyzed your progress on the <span class="font-semibold text-primary">Cloud Infrastructure</span> course. You're mastering the basics, but I noticed you skipped the section on <span class="font-semibold text-tertiary">Distributed Consensus</span>.</p>
+<p class="mt-2 text-on-background leading-relaxed">Would you like to deep-dive into how Redis clusters handle state transitions today?</p>
+</div>
+<span class="text-[10px] font-label-mono text-outline uppercase pl-1">Just now</span>
+</div>
+</div>
+<!-- User Message -->
+<div class="flex gap-4 max-w-3xl ml-auto flex-row-reverse">
+<div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-white text-sm" data-icon="person">person</span>
+</div>
+<div class="flex flex-col gap-1 items-end">
+<div class="bg-primary text-white p-4 rounded-2xl rounded-tr-none shadow-sm">
+<p class="leading-relaxed">That sounds perfect. I find the concept of 'Gossip Protocols' a bit confusing. Can we start there?</p>
+</div>
+<span class="text-[10px] font-label-mono text-outline uppercase pr-1">Sent</span>
+</div>
+</div>
+<!-- Bot Message (Thinking state simulation) -->
+<div class="flex gap-4 max-w-3xl">
+<div class="w-8 h-8 rounded-lg bg-tertiary-container flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-on-tertiary-container text-sm" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="message-gradient-bot p-4 rounded-2xl rounded-tl-none border border-outline-variant ai-sparkle-glow">
+<p class="text-on-background leading-relaxed italic opacity-70">Synthesizing visual explanation for Gossip Protocols...</p>
+<div class="mt-4 border-l-2 border-tertiary pl-4 py-1">
+<h4 class="font-semibold text-tertiary mb-1">Gossip Protocol (The Pandemic Model)</h4>
+<p class="text-sm">Imagine a node tells two other nodes a secret. Those two each tell two more. Within seconds, the entire cluster knows. It's resilient because there's no "master" node that can fail.</p>
+</div>
+</div>
+<span class="text-[10px] font-label-mono text-outline uppercase pl-1">AI IS TYPING...</span>
+</div>
+</div>
+</div>
+<!-- Input Area -->
+<div class="p-4 md:p-6 bg-white border-t border-outline-variant">
+<!-- Quick Action Chips -->
+<div class="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
+<button class="whitespace-nowrap px-3 py-1.5 rounded-full bg-surface-container-low border border-outline-variant text-on-surface-variant hover:bg-surface-variant transition-all flex items-center gap-2 text-xs font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="summarize">summarize</span> Review weekly plan
+                        </button>
+<button class="whitespace-nowrap px-3 py-1.5 rounded-full bg-surface-container-low border border-outline-variant text-on-surface-variant hover:bg-surface-variant transition-all flex items-center gap-2 text-xs font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="hub">hub</span> Explain Redis clusters
+                        </button>
+<button class="whitespace-nowrap px-3 py-1.5 rounded-full bg-surface-container-low border border-outline-variant text-on-surface-variant hover:bg-surface-variant transition-all flex items-center gap-2 text-xs font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="quiz">quiz</span> Quiz me on Raft
+                        </button>
+</div>
+<div class="relative flex items-center">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl py-4 pl-6 pr-14 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm" placeholder="Ask your mentor anything..." type="text"/>
+<button class="absolute right-3 w-10 h-10 bg-primary text-white rounded-lg flex items-center justify-center hover:bg-primary-container active:scale-90 transition-all shadow-md">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+</button>
+</div>
+<p class="text-[10px] text-center text-outline mt-3 uppercase tracking-tighter">AI Mentor powered by LearnFlow 4.0 Pro</p>
+</div>
+</div>
+<!-- Learning Context Panel (Right Sidebar) -->
+<aside class="hidden lg:flex flex-col w-72 h-full bg-surface-container-lowest border-l border-outline-variant p-6 gap-8 overflow-y-auto">
+<section>
+<h4 class="text-xs font-label-mono text-outline uppercase tracking-widest mb-4">Current Focus</h4>
+<div class="bg-primary-container/10 border border-primary/20 p-4 rounded-xl">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary text-lg" data-icon="cloud">cloud</span>
+<span class="font-semibold text-primary">Cloud Infrastructure</span>
+</div>
+<div class="w-full bg-surface-container-high h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[65%]"></div>
+</div>
+<p class="text-[10px] mt-2 text-on-surface-variant">65% Course Completion</p>
+</div>
+</section>
+<section>
+<h4 class="text-xs font-label-mono text-outline uppercase tracking-widest mb-4">Weak Areas</h4>
+<div class="flex flex-col gap-3">
+<div class="flex items-center justify-between p-3 rounded-lg border border-outline-variant bg-white">
+<span class="text-sm font-medium">Distributed Systems</span>
+<span class="material-symbols-outlined text-error text-lg" data-icon="trending_down">trending_down</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-lg border border-outline-variant bg-white">
+<span class="text-sm font-medium">Network Latency</span>
+<span class="material-symbols-outlined text-tertiary text-lg" data-icon="bolt">bolt</span>
+</div>
+</div>
+</section>
+<section class="mt-auto">
+<div class="relative rounded-xl overflow-hidden aspect-video group cursor-pointer">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="A futuristic, high-tech classroom or workspace with holographic interfaces showing complex data structures and code. The environment is sleek, featuring dark slate and vibrant indigo tones with soft neon accents. The lighting is moody and focused, creating an atmosphere of deep concentration and advanced technological learning." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCl3vOLkYeBgrL7Vkeo10qQwiBLYQcctnr7YO2mFafkXw18bS4d5eIoDVs86vVJs_JQpcyjIjYZ0zWf7tQzE-gfDEu6Ijv4_b42d3Lk060ykAQXa5o2lthMvVC51wH9b30_QhD-yw4WERGXmmmuU_8bBEbsgbI0nh87v9f7FsxnZI-2yiuuBwuIYgXhk4UXtSi5hVVO04yoT_EkjNRC33tlAto2QyvL4waW5BEPhVIK64L1gBxIaDuSKWU86vfy18n1IDIcWDEiPUOj"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-4">
+<p class="text-white text-xs font-semibold">Recommended Session</p>
+<p class="text-white/70 text-[10px]">Mastering Kubernetes Helm Charts</p>
+</div>
+</div>
+</section>
+</aside>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 px-2 pb-safe bg-surface dark:bg-surface-dim border-t border-outline-variant dark:border-outline shadow-lg md:hidden">
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-mono text-[10px]">Dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="book_5">book_5</span>
+<span class="font-label-mono text-[10px]">Journal</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span class="font-label-mono text-[10px]">Search</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-tertiary-container text-on-tertiary-container rounded-full px-4 py-1 active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="font-label-mono text-[10px]">AI Coach</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-mono text-[10px]">Analytics</span>
+</div>
+</nav>
+<script>
+        // Simple micro-interaction for input
+        const input = document.querySelector('input');
+        const sendBtn = document.querySelector('button.absolute');
+        
+        input.addEventListener('focus', () => {
+            input.parentElement.classList.add('scale-[1.01]');
+        });
+        
+        input.addEventListener('blur', () => {
+            input.parentElement.classList.remove('scale-[1.01]');
+        });
+
+        // Toggle context panel for mobile (Simulated)
+        let contextVisible = false;
+        document.querySelector('[data-icon="menu"]').addEventListener('click', () => {
+            // In a real app, this would toggle the navigation drawer or context panel
+            alert("LearnFlow Navigation Menu opened.");
+        });
+    </script>
+</body></html>

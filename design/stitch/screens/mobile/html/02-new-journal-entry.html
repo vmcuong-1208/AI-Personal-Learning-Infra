@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>New Entry | LearnFlow AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-variant": "#dae2fd",
+                      "on-error-container": "#93000a",
+                      "tertiary": "#571ac0",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed": "#23005c",
+                      "background": "#faf8ff",
+                      "on-secondary-container": "#00714d",
+                      "primary-fixed-dim": "#c3c0ff",
+                      "surface-container-low": "#f2f3ff",
+                      "on-primary-fixed": "#0f0069",
+                      "primary": "#3525cd",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-container": "#e3d5ff",
+                      "inverse-primary": "#c3c0ff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary-fixed": "#002113",
+                      "outline": "#777587",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-fixed-variant": "#005236",
+                      "primary-fixed": "#e2dfff",
+                      "surface-container-high": "#e2e7ff",
+                      "secondary-container": "#6cf8bb",
+                      "error-container": "#ffdad6",
+                      "tertiary-fixed-dim": "#d0bcff",
+                      "surface": "#faf8ff",
+                      "secondary": "#006c49",
+                      "on-primary-fixed-variant": "#3323cc",
+                      "on-tertiary-fixed-variant": "#5516be",
+                      "primary-container": "#4f46e5",
+                      "tertiary-fixed": "#e9ddff",
+                      "on-background": "#131b2e",
+                      "on-secondary": "#ffffff",
+                      "surface-dim": "#d2d9f4",
+                      "on-primary-container": "#dad7ff",
+                      "tertiary-container": "#6f3dd9",
+                      "surface-container": "#eaedff",
+                      "outline-variant": "#c7c4d8",
+                      "surface-bright": "#faf8ff",
+                      "inverse-surface": "#283044",
+                      "on-error": "#ffffff",
+                      "secondary-fixed": "#6ffbbe",
+                      "on-surface-variant": "#464555",
+                      "surface-tint": "#4d44e3",
+                      "secondary-fixed-dim": "#4edea3",
+                      "surface-container-highest": "#dae2fd",
+                      "on-surface": "#131b2e",
+                      "inverse-on-surface": "#eef0ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "gutter": "24px",
+                      "margin-mobile": "16px",
+                      "container-max": "1200px",
+                      "card-padding": "20px",
+                      "margin-desktop": "40px"
+              },
+              "fontFamily": {
+                      "display": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "label-mono": ["JetBrains Mono"],
+                      "body-md": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "body-lg": ["Inter"]
+              },
+              "fontSize": {
+                      "display": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "label-mono": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-lg": ["16px", {"lineHeight": "26px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .ai-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        .ai-glow {
+            box-shadow: inset 0 0 10px rgba(111, 61, 217, 0.1);
+            border: 1px solid rgba(111, 61, 217, 0.2);
+        }
+        textarea:focus {
+            outline: none;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md overflow-x-hidden">
+<!-- Top AppBar (Shared Component Logic) -->
+<header class="bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop h-14 z-50 fixed top-0">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer active:scale-95" data-icon="close">close</span>
+<h1 class="font-display text-headline-md text-primary dark:text-primary-fixed-dim tracking-tight">LearnFlow AI</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 h-9 px-4 bg-primary text-on-primary font-medium rounded-lg active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[18px]" data-icon="save">save</span>
+<span class="font-label-mono text-label-mono uppercase tracking-widest">Save Entry</span>
+</button>
+</div>
+</header>
+<!-- Main Content Layout -->
+<main class="pt-24 pb-32 px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto min-h-screen">
+<div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-12">
+<!-- Distraction-Free Editor Canvas -->
+<section class="space-y-8 animate-in fade-in duration-700">
+<!-- Title Field -->
+<div class="space-y-1">
+<input class="w-full bg-transparent border-none p-0 font-display text-display focus:ring-0 placeholder:text-outline-variant" placeholder="Title of your discovery..." type="text" value="Terraform Basics"/>
+<div class="h-[1px] bg-outline-variant w-24"></div>
+</div>
+<!-- Meta Data Row -->
+<div class="flex flex-wrap items-center gap-6">
+<div class="flex items-center gap-2 group">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="category">category</span>
+<input class="bg-transparent border-none p-0 focus:ring-0 text-on-surface-variant font-body-md w-32" placeholder="Topic" type="text" value="Cloud Infrastructure"/>
+</div>
+<div class="flex items-center gap-2 group">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="sell">sell</span>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 bg-surface-container text-on-surface-variant text-[11px] font-label-mono rounded uppercase">IaC</span>
+<span class="px-2 py-0.5 bg-surface-container text-on-surface-variant text-[11px] font-label-mono rounded uppercase">DevOps</span>
+<input class="bg-transparent border-none p-0 focus:ring-0 text-on-surface-variant text-xs w-20" placeholder="+ Add tag" type="text"/>
+</div>
+</div>
+</div>
+<!-- Main Note Area -->
+<div class="relative min-h-[500px]">
+<textarea class="w-full h-full min-h-[500px] bg-transparent border-none p-0 focus:ring-0 text-body-lg leading-relaxed placeholder:text-outline-variant resize-none" placeholder="Start writing your thoughts, concepts, or code snippets here...">Terraform is an open-source infrastructure as code software tool created by HashiCorp. Users define and provision data center infrastructure using a declarative configuration language known as HashiCorp Configuration Language (HCL).
+
+Key concepts encountered today:
+1. Providers: Plugins that Terraform uses to interact with cloud providers, SaaS providers, and other APIs.
+2. Resources: The most important element in the Terraform language. Each resource block describes one or more infrastructure objects.
+3. State: Terraform must store state about your managed infrastructure and configuration. This state is used by Terraform to map real world resources to your configuration.
+
+I need to dive deeper into remote backends and state locking for team environments.</textarea>
+</div>
+</section>
+<!-- Sidebar Context Panel -->
+<aside class="space-y-8 h-fit lg:sticky lg:top-24">
+<!-- Mood/Confidence Card -->
+<div class="bg-white border border-slate-200 rounded-xl p-card-padding shadow-sm">
+<h3 class="font-headline-md text-on-surface mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="psychology">psychology</span>
+                        Confidence
+                    </h3>
+<div class="space-y-6">
+<div class="flex justify-between text-label-mono text-outline uppercase">
+<span>Struggling</span>
+<span>Expert</span>
+</div>
+<input class="w-full h-1 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary" max="5" min="1" step="1" type="range" value="3"/>
+<div class="flex justify-around items-center">
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:bg-primary-container hover:text-on-primary-container transition-colors active:scale-90">
+<span class="material-symbols-outlined" data-icon="sentiment_dissatisfied">sentiment_dissatisfied</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:bg-primary-container hover:text-on-primary-container transition-colors active:scale-90">
+<span class="material-symbols-outlined" data-icon="sentiment_neutral">sentiment_neutral</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-md scale-110">
+<span class="material-symbols-outlined" data-icon="sentiment_satisfied">sentiment_satisfied</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:bg-primary-container hover:text-on-primary-container transition-colors active:scale-90">
+<span class="material-symbols-outlined" data-icon="sentiment_very_satisfied">sentiment_very_satisfied</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Learning Progress Micro-Component -->
+<div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+<div class="p-4 border-b border-slate-100 flex justify-between items-center bg-surface-container-lowest">
+<span class="font-label-mono text-label-mono uppercase tracking-tighter text-outline">Session Insight</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary ai-pulse" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<div class="p-card-padding space-y-4">
+<div class="space-y-2">
+<div class="flex justify-between text-xs">
+<span class="text-on-surface-variant">Concept Density</span>
+<span class="font-label-mono text-primary">High</span>
+</div>
+<div class="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[85%]"></div>
+</div>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed italic">
+                            "You've linked 3 new concepts to your 'DevOps' knowledge graph today."
+                        </p>
+</div>
+</div>
+<!-- Image Placeholder for Contextual Inspiration -->
+<div class="rounded-xl overflow-hidden border border-slate-200 relative aspect-square group cursor-pointer">
+<img class="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110" data-alt="A clean, minimalist high-angle shot of a designer's wooden desk with a sleek laptop, a black ink fountain pen, and a neatly bound grey linen notebook. The lighting is soft and natural, coming from a side window, creating gentle shadows. The overall aesthetic is professional, productive, and serene, mirroring the high-signal, low-noise design system with neutral colors and a pop of deep indigo." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzEfQNRjNG8_pC03kL_iZwkqOzIvi088eDYBDIyQdKV1iA7SZSRtIWBJteLbSljy-c6RrgAjoJmm4FSSTGCnsA-zv1g_J-py1yoWhwTwh1k88caFfDaYDvjUz7_kx3zd-k1o3Cdj4IWUQUfjXKpjX30dNCUOHdpjzgyEi0h3A8PfH8-_TYnbNDVHs0kmTQGHo9ZjpxyCf7b9L5nn8U3BwE4RkCZ_FTTUJYw8hhEUwHQb_15jrQzt5px7kmqd2FYls1vRU2r0dJ4tCP"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+<p class="text-white text-[11px] font-label-mono uppercase tracking-widest opacity-80">Reference Environment</p>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Navigation Bar (Shared Component Logic - Active on 'Journal') -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 px-2 pb-safe bg-surface dark:bg-surface-dim border-t border-outline-variant dark:border-outline shadow-lg dark:shadow-none md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-mono text-label-mono">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-tertiary-container text-on-tertiary-container rounded-full px-4 py-1 active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="book_5">book_5</span>
+<span class="font-label-mono text-label-mono">Journal</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span class="font-label-mono text-label-mono">Search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span class="font-label-mono text-label-mono">AI Coach</span>
+</a>
+</nav>
+<!-- Floating AI Status Panel -->
+<div class="fixed bottom-20 md:bottom-8 left-1/2 -translate-x-1/2 z-[60]">
+<div class="bg-inverse-surface text-inverse-on-surface px-6 py-3 rounded-full shadow-2xl flex items-center gap-4 ai-glow backdrop-blur-md">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary-fixed-dim ai-pulse text-[20px]" data-icon="query_stats">query_stats</span>
+<span class="font-label-mono text-[11px] uppercase tracking-widest whitespace-nowrap">AI Processing: Analyzing concepts...</span>
+</div>
+<div class="h-4 w-[1px] bg-outline/30"></div>
+<button class="text-[10px] font-bold uppercase tracking-tighter hover:text-tertiary-fixed-dim transition-colors">Details</button>
+</div>
+</div>
+<!-- Background Decoration -->
+<div class="fixed inset-0 -z-10 opacity-30 pointer-events-none">
+<div class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-fixed/20 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-secondary-fixed/20 blur-[100px] rounded-full"></div>
+</div>
+<script>
+        // Micro-interaction for auto-saving simulation
+        let typingTimer;
+        const textarea = document.querySelector('textarea');
+        const aiStatus = document.querySelector('.ai-glow span');
+
+        textarea.addEventListener('input', () => {
+            clearTimeout(typingTimer);
+            aiStatus.textContent = "AI SCANNING: Tracking intent...";
+            
+            typingTimer = setTimeout(() => {
+                aiStatus.textContent = "AI Processing: Analyzing concepts...";
+            }, 1500);
+        });
+
+        // Toggle focus state for title
+        const titleInput = document.querySelector('input[type="text"]');
+        const titleDivider = titleInput.nextElementSibling;
+        
+        titleInput.addEventListener('focus', () => {
+            titleDivider.classList.replace('bg-outline-variant', 'bg-primary');
+            titleDivider.classList.replace('w-24', 'w-full');
+            titleDivider.classList.add('transition-all', 'duration-500');
+        });
+
+        titleInput.addEventListener('blur', () => {
+            titleDivider.classList.replace('bg-primary', 'bg-outline-variant');
+            titleDivider.classList.replace('w-full', 'w-24');
+        });
+    </script>
+</body></html>

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Entry Details - LearnFlow AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#00714d",
+                        "surface-tint": "#4d44e3",
+                        "secondary-fixed": "#6ffbbe",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "on-tertiary-fixed": "#23005c",
+                        "tertiary": "#571ac0",
+                        "surface-container-highest": "#dae2fd",
+                        "surface-container-high": "#e2e7ff",
+                        "on-background": "#131b2e",
+                        "surface-container": "#eaedff",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "surface": "#faf8ff",
+                        "tertiary-fixed-dim": "#d0bcff",
+                        "on-secondary-fixed-variant": "#005236",
+                        "surface-dim": "#d2d9f4",
+                        "on-secondary-fixed": "#002113",
+                        "tertiary-container": "#6f3dd9",
+                        "primary": "#3525cd",
+                        "outline": "#777587",
+                        "outline-variant": "#c7c4d8",
+                        "primary-container": "#4f46e5",
+                        "on-primary": "#ffffff",
+                        "surface-container-low": "#f2f3ff",
+                        "primary-fixed": "#e2dfff",
+                        "on-tertiary-fixed-variant": "#5516be",
+                        "on-primary-fixed": "#0f0069",
+                        "inverse-primary": "#c3c0ff",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#dae2fd",
+                        "on-surface": "#131b2e",
+                        "on-surface-variant": "#464555",
+                        "inverse-surface": "#283044",
+                        "tertiary-fixed": "#e9ddff",
+                        "error": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#faf8ff",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#dad7ff",
+                        "background": "#faf8ff",
+                        "on-tertiary-container": "#e3d5ff",
+                        "secondary-container": "#6cf8bb",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#4edea3",
+                        "inverse-on-surface": "#eef0ff",
+                        "secondary": "#006c49"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-desktop": "40px",
+                        "card-padding": "20px",
+                        "unit": "4px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "container-max": "1200px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "display": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "display": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-mono": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { background-color: #faf8ff; color: #131b2e; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+        .ai-glow { border: 1px solid #c7c4d8; box-shadow: inset 0 0 12px rgba(87, 26, 192, 0.05); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="font-body-md text-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- Navigation Drawer (Shared Component) -->
+<aside class="h-full w-80 fixed left-0 top-0 bg-surface-container-low dark:bg-surface-container-highest border-r border-outline-variant flex flex-col py-6 z-50">
+<div class="px-6 mb-10">
+<h1 class="font-display text-headline-md text-primary tracking-tight">LearnFlow AI</h1>
+</div>
+<nav class="flex-1">
+<ul class="space-y-1">
+<li>
+<a class="flex items-center px-6 py-3 text-on-surface-variant hover:bg-surface-variant hover:pl-6 transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="add_circle">add_circle</span>
+<span class="font-body-md">New Entry</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-6 py-3 bg-primary-container text-on-primary-container font-semibold rounded-r-full transition-all duration-300" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="psychology">psychology</span>
+<span class="font-body-md">Reflections</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-6 py-3 text-on-surface-variant hover:bg-surface-variant hover:pl-6 transition-all duration-300" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="library_books">library_books</span>
+<span class="font-body-md">Library</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-6 py-3 text-on-surface-variant hover:bg-surface-variant hover:pl-6 transition-all duration-300" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="settings">settings</span>
+<span class="font-body-md">Settings</span>
+</a>
+</li>
+</ul>
+</nav>
+<div class="px-6 mt-auto">
+<div class="flex items-center p-4 rounded-xl bg-surface-container gap-3">
+<img class="w-10 h-10 rounded-full border-2 border-white shadow-sm" data-alt="A professional headshot of a young male software engineer with glasses, looking thoughtful and focused. The image has a clean, high-key studio lighting aesthetic with a neutral, soft-grey background to emphasize a minimalist, professional atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9f6RC-cU7pJpZShkepTkFPl40d1MTJeADWGjNVmDey0k5YHlmoiIMFgudWk0irNW4fqBTX392xOC_ow9Y1MQLs_UcHYHOfn01SC8LAQxEeiVkdUMvdzQhT5TGGHSiOoRbANmlhDpt3TQYW0CGXtT9WbgrH9CuMFVFulFGImM6NvZ5KdqgKYbBZ7_Ou95s6MV--1DOytsnLUi_xHPRpaUbamzGYfeLDFbdo6xR1z0_7j3BMO_1OHZeqBOA5cmTQp6iXKwBC4K0Sl6j"/>
+<div class="flex-1 overflow-hidden">
+<p class="font-semibold text-on-surface truncate">Alex Learner</p>
+<p class="text-xs text-on-surface-variant">Pro Member</p>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-label-mono text-tertiary animate-pulse">AI SCANNING...</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-80 mr-96 min-h-screen pb-20">
+<!-- Top App Bar (Shared Logic) -->
+<header class="sticky top-0 bg-surface flex justify-between items-center w-full px-margin-desktop h-14 z-40 border-b border-outline-variant">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="text-sm">Journal</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-sm">Technical Logs</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-sm font-semibold text-primary">Entry</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-sm font-label-mono text-outline">Oct 24, 2023 • 14:30</span>
+<button class="flex items-center gap-2 h-[36px] px-4 border border-outline rounded-lg hover:bg-surface-container-high transition-colors active:scale-95 text-sm font-medium">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+                    Edit Content
+                </button>
+</div>
+</header>
+<!-- Content Canvas -->
+<article class="max-w-[800px] mx-auto py-12 px-margin-desktop">
+<h1 class="font-headline-lg text-headline-lg mb-8 text-on-surface">BullMQ handles background jobs</h1>
+<section class="prose prose-slate max-w-none space-y-6 text-on-surface">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden mb-10">
+<div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<span class="font-label-mono text-xs uppercase tracking-widest text-outline">Concurrency Model Visual</span>
+<span class="material-symbols-outlined text-outline">fullscreen</span>
+</div>
+<div class="p-8 flex justify-center bg-white">
+<div class="w-full max-w-lg aspect-[16/9] relative border border-dashed border-outline-variant rounded-lg flex items-center justify-center bg-surface-bright overflow-hidden">
+<!-- Diagram representation -->
+<div class="absolute inset-0 opacity-10">
+
+</div>
+<div class="z-10 flex flex-col items-center gap-4">
+<div class="flex gap-8">
+<div class="w-24 h-24 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container flex-col shadow-sm">
+<span class="material-symbols-outlined text-3xl">terminal</span>
+<span class="text-[10px] mt-1 font-label-mono">Producer</span>
+</div>
+<div class="w-32 h-24 rounded-lg border-2 border-primary border-dashed flex items-center justify-center text-primary flex-col bg-white">
+<span class="material-symbols-outlined text-3xl">storage</span>
+<span class="text-[10px] mt-1 font-label-mono">Redis Queue</span>
+</div>
+<div class="flex flex-col gap-2">
+<div class="w-24 h-11 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container flex-col shadow-sm">
+<span class="text-[10px] font-label-mono">Worker A</span>
+</div>
+<div class="w-24 h-11 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container flex-col shadow-sm">
+<span class="text-[10px] font-label-mono">Worker B</span>
+</div>
+</div>
+</div>
+<p class="text-sm font-medium text-outline">Distributed Concurrency Workflow</p>
+</div>
+</div>
+</div>
+</div>
+<div class="space-y-4">
+<h3 class="font-headline-md text-headline-md border-l-4 border-primary pl-4">Core Principles</h3>
+<p class="text-body-lg leading-relaxed text-on-surface-variant">
+                        BullMQ is a Node.js message queue library that leverages Redis for persistence and atomicity. Unlike simpler task runners, BullMQ is built for enterprise-grade scalability, handling features like stalled job detection, parent-child job dependencies, and rate limiting natively.
+                    </p>
+<p class="text-body-lg leading-relaxed text-on-surface-variant">
+                        The concurrency model relies on <code class="font-label-mono px-1.5 py-0.5 bg-surface-container rounded">Worker</code> instances that poll Redis. Each worker can process jobs in parallel depending on the configuration. Key takeaway: <strong class="text-primary">Atomic operations in Redis</strong> ensure that a job is never picked up by two workers simultaneously, even in a high-traffic distributed system.
+                    </p>
+</div>
+<div class="p-6 bg-surface-container rounded-xl border-l-4 border-outline-variant italic text-on-surface-variant">
+                    "Observation: In production, we noticed that setting concurrency too high on I/O bound tasks led to connection exhaustion. The sweet spot for our Node clusters was 20 workers per instance."
+                </div>
+<div class="space-y-4 pt-8">
+<h3 class="font-headline-md text-headline-md">Original Field Notes</h3>
+<ul class="list-disc pl-5 space-y-3 text-on-surface-variant">
+<li>Need to investigate <code>removeOnComplete</code> settings for high-volume logs.</li>
+<li>Backoff strategies: Exponential vs. Fixed. Current default is too aggressive.</li>
+<li>Prioritize "User Notification" jobs over "Analytics Batch" jobs using the priority key (1-100).</li>
+</ul>
+</div>
+</section>
+<!-- Bottom CTA -->
+<div class="mt-16 pt-12 border-t border-outline-variant">
+<button class="w-full h-16 bg-primary text-on-primary rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-primary-container transition-all active:scale-[0.98] shadow-lg">
+<span class="material-symbols-outlined text-2xl">auto_awesome</span>
+                    Generate Quiz from this Entry
+                    <span class="material-symbols-outlined">chevron_right</span>
+</button>
+<p class="text-center text-xs text-outline mt-4 font-label-mono">AI-powered knowledge testing • Takes approx. 4 minutes</p>
+</div>
+</article>
+</main>
+<!-- Right Sidebar (Analysis) -->
+<aside class="w-96 h-full fixed right-0 top-0 bg-surface border-l border-outline-variant p-6 overflow-y-auto hide-scrollbar z-30">
+<div class="mb-8 flex items-center justify-between">
+<h2 class="font-headline-md text-headline-md">AI Analysis</h2>
+<span class="material-symbols-outlined text-tertiary-container" style="font-variation-settings: 'FILL' 1;">spark</span>
+</div>
+<!-- Executive Summary Card -->
+<div class="bg-tertiary-container p-5 rounded-xl text-on-tertiary-container mb-8 shadow-sm ai-glow relative overflow-hidden">
+<div class="absolute top-0 right-0 p-2 opacity-20">
+<span class="material-symbols-outlined text-4xl">psychology</span>
+</div>
+<p class="text-xs font-label-mono uppercase tracking-tighter mb-2 opacity-80">Executive Summary</p>
+<p class="text-sm leading-relaxed font-medium">
+                The entry demonstrates a strong architectural grasp of Redis-backed message systems. Your focus on atomic operations aligns with best practices for distributed reliability.
+            </p>
+</div>
+<!-- Key Concepts -->
+<div class="mb-8">
+<p class="text-xs font-label-mono uppercase tracking-widest text-outline mb-4">Key Concepts</p>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-label-mono text-on-surface-variant border border-outline-variant">Redis Streams</span>
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-label-mono text-on-surface-variant border border-outline-variant">Atomicity</span>
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-label-mono text-on-surface-variant border border-outline-variant">Job Life-cycle</span>
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-label-mono text-on-surface-variant border border-outline-variant">Distributed Systems</span>
+</div>
+</div>
+<!-- Strengths / Gaps -->
+<div class="mb-8 space-y-6">
+<div>
+<p class="text-xs font-label-mono uppercase tracking-widest text-secondary mb-3">Knowledge Strengths</p>
+<div class="space-y-3">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-secondary text-lg">check_circle</span>
+<p class="text-sm text-on-surface-variant">Understands horizontal scaling limitations.</p>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-secondary text-lg">check_circle</span>
+<p class="text-sm text-on-surface-variant">Clear grasp of Redis persistence mechanisms.</p>
+</div>
+</div>
+</div>
+<div>
+<p class="text-xs font-label-mono uppercase tracking-widest text-error mb-3">Knowledge Gaps</p>
+<div class="space-y-3">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-error text-lg">error</span>
+<p class="text-sm text-on-surface-variant">Limited mention of error-handling middleware patterns.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Related Entries -->
+<div class="mb-8">
+<p class="text-xs font-label-mono uppercase tracking-widest text-outline mb-4">Related Entries</p>
+<div class="space-y-3">
+<a class="block p-3 border border-outline-variant rounded-lg hover:bg-surface-container transition-colors group" href="#">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-label-mono text-primary">Technical Log</span>
+<span class="text-[10px] text-outline">2 weeks ago</span>
+</div>
+<p class="text-sm font-semibold group-hover:text-primary transition-colors">Redis Data Structures</p>
+</a>
+<a class="block p-3 border border-outline-variant rounded-lg hover:bg-surface-container transition-colors group" href="#">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-label-mono text-primary">System Design</span>
+<span class="text-[10px] text-outline">1 month ago</span>
+</div>
+<p class="text-sm font-semibold group-hover:text-primary transition-colors">Node.js Performance Optimization</p>
+</a>
+</div>
+</div>
+<!-- Feedback section -->
+<div class="mt-12 p-4 rounded-xl border border-dashed border-outline-variant text-center">
+<p class="text-xs text-on-surface-variant mb-3">Was this analysis helpful?</p>
+<div class="flex justify-center gap-4">
+<button class="p-2 hover:bg-surface-container rounded-full transition-colors text-outline hover:text-secondary">
+<span class="material-symbols-outlined">thumb_up</span>
+</button>
+<button class="p-2 hover:bg-surface-container rounded-full transition-colors text-outline hover:text-error">
+<span class="material-symbols-outlined">thumb_down</span>
+</button>
+</div>
+</div>
+</aside>
+<!-- Floating Action Button Logic (Contextual Suppression) -->
+<!-- Suppressed on Entry Details screen per requirements -->
+<script>
+        // Simple micro-interactions
+        document.querySelectorAll('button, a').forEach(el => {
+            el.addEventListener('mousedown', () => el.classList.add('scale-95'));
+            el.addEventListener('mouseup', () => el.classList.remove('scale-95'));
+            el.addEventListener('mouseleave', () => el.classList.remove('scale-95'));
+        });
+
+        // Breadcrumb hover effect
+        document.querySelectorAll('header span.text-sm').forEach(span => {
+            if(!span.classList.contains('font-semibold')) {
+                span.classList.add('cursor-pointer', 'hover:text-primary', 'transition-colors');
+            }
+        });
+    </script>
+</body></html>

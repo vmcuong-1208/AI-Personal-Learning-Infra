@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LearnFlow AI - Knowledge Quiz</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#00714d",
+                        "surface-tint": "#4d44e3",
+                        "secondary-fixed": "#6ffbbe",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "on-tertiary-fixed": "#23005c",
+                        "tertiary": "#571ac0",
+                        "surface-container-highest": "#dae2fd",
+                        "surface-container-high": "#e2e7ff",
+                        "on-background": "#131b2e",
+                        "surface-container": "#eaedff",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "surface": "#faf8ff",
+                        "tertiary-fixed-dim": "#d0bcff",
+                        "on-secondary-fixed-variant": "#005236",
+                        "surface-dim": "#d2d9f4",
+                        "on-secondary-fixed": "#002113",
+                        "tertiary-container": "#6f3dd9",
+                        "primary": "#3525cd",
+                        "outline": "#777587",
+                        "outline-variant": "#c7c4d8",
+                        "primary-container": "#4f46e5",
+                        "on-primary": "#ffffff",
+                        "surface-container-low": "#f2f3ff",
+                        "primary-fixed": "#e2dfff",
+                        "on-tertiary-fixed-variant": "#5516be",
+                        "on-primary-fixed": "#0f0069",
+                        "inverse-primary": "#c3c0ff",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#dae2fd",
+                        "on-surface": "#131b2e",
+                        "on-surface-variant": "#464555",
+                        "inverse-surface": "#283044",
+                        "tertiary-fixed": "#e9ddff",
+                        "error": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#faf8ff",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#dad7ff",
+                        "background": "#faf8ff",
+                        "on-tertiary-container": "#e3d5ff",
+                        "secondary-container": "#6cf8bb",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#4edea3",
+                        "inverse-on-surface": "#eef0ff",
+                        "secondary": "#006c49"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-desktop": "40px",
+                        "card-padding": "20px",
+                        "unit": "4px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "container-max": "1200px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "display": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "display": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "label-mono": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .option-card:hover .radio-indicator {
+            border-color: #3525cd;
+        }
+        .ai-shimmer {
+            background: linear-gradient(90deg, #f2f3ff 0%, #e3d5ff 50%, #f2f3ff 100%);
+            background-size: 200% 100%;
+            animation: shimmer 3s infinite linear;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- Sidebar Navigation -->
+<aside class="h-full w-80 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant flex flex-col py-6 z-40 hidden md:flex">
+<div class="px-6 mb-10">
+<h1 class="font-display text-headline-md text-primary tracking-tight">LearnFlow AI</h1>
+</div>
+<nav class="flex-1 px-4 space-y-2">
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-variant transition-all duration-300 rounded-lg group" href="#">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="font-body-md text-body-md">New Entry</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 bg-primary-container text-on-primary-container font-semibold rounded-r-full group shadow-sm" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<span class="font-body-md text-body-md">Reflections</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-variant transition-all duration-300 rounded-lg group" href="#">
+<span class="material-symbols-outlined">library_books</span>
+<span class="font-body-md text-body-md">Library</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-variant transition-all duration-300 rounded-lg group" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+<div class="mt-auto px-6 pt-6 border-t border-outline-variant">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-primary-fixed overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a modern software engineer in a clean workspace environment. The person is wearing minimalist business casual attire, looking directly at the camera with a confident expression. The background is a soft-focus tech office with warm lighting and subtle indigo accents, matching a refined minimalist UI aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4iUn0lUDHHVPwU6Y8a0YRQxGgWbsrVszxjYRkRaFv_G47J286x2iDr9PB0gfg1Uufx9YioIe6Ap2nacsuoynOHKzesK8nONlXDMRwvq5l0IGy-D0-3siffgXlFPOKuCMUBOvRd_11lpVVuWmtLh0aGa6Mvlm0HmOtaCTodT-1UAXJu-rG2EwajIitHgGoyOuBoxbStnvfLMKm-HX8gKkmfKXGapmtXvQDfYsY-I2sLiJGWiHlAaSL15cT6DLWS_aL1G5Y-tkAHwoJ"/>
+</div>
+<div>
+<p class="font-headline-md text-body-md leading-tight">Alex Learner</p>
+<p class="text-xs text-on-surface-variant">Pro Member</p>
+</div>
+</div>
+<div class="flex items-center justify-between bg-surface-container-highest rounded-lg p-3">
+<span class="font-label-mono text-label-mono text-primary animate-pulse">AI SCANNING...</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="md:ml-80 mr-0 lg:mr-96 min-h-screen flex flex-col p-6 md:p-10">
+<!-- Top App Bar Content (Embedded in Main for Layout) -->
+<header class="flex justify-between items-center w-full mb-12">
+<div>
+<h2 class="font-headline-lg text-headline-lg">Knowledge Quiz</h2>
+<p class="text-on-surface-variant font-body-md mt-1">Topic: Advanced Distributed Systems &amp; Redis Mastery</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="h-10 w-10 flex items-center justify-center rounded-full bg-surface-container-high cursor-pointer active:scale-95 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</div>
+<div class="h-10 w-10 flex items-center justify-center rounded-full bg-surface-container-high cursor-pointer active:scale-95 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">share</span>
+</div>
+</div>
+</header>
+<!-- Quiz Area -->
+<div class="max-w-3xl mx-auto w-full flex-1 flex flex-col">
+<!-- Question Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 shadow-sm mb-8">
+<div class="flex items-center gap-2 mb-6">
+<span class="px-2 py-1 bg-surface-container-high text-on-surface-variant rounded font-label-mono text-label-mono">QUESTION 07</span>
+<span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
+<span class="text-on-surface-variant font-body-md">Data Persistence &amp; Atomicity</span>
+</div>
+<h3 class="font-headline-md text-headline-md leading-relaxed mb-10">
+                    How does BullMQ ensure job atomicity when processing high-volume task queues within a Redis-backed environment?
+                </h3>
+<!-- Options -->
+<div class="grid grid-cols-1 gap-4">
+<!-- Option A -->
+<button class="option-card group flex items-center gap-4 p-5 border border-outline-variant rounded-xl text-left hover:border-primary hover:bg-surface-container-low transition-all duration-200" onclick="selectOption(this)">
+<div class="radio-indicator w-6 h-6 rounded-full border-2 border-outline-variant flex items-center justify-center group-hover:border-primary transition-colors">
+<span class="w-3 h-3 rounded-full bg-primary scale-0 transition-transform"></span>
+</div>
+<span class="flex-1 font-body-md text-body-md">By utilizing Redis Lua scripts to execute multiple commands as a single atomic operation.</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant group-hover:text-primary">A</span>
+</button>
+<!-- Option B -->
+<button class="option-card group flex items-center gap-4 p-5 border border-outline-variant rounded-xl text-left hover:border-primary hover:bg-surface-container-low transition-all duration-200" onclick="selectOption(this)">
+<div class="radio-indicator w-6 h-6 rounded-full border-2 border-outline-variant flex items-center justify-center group-hover:border-primary transition-colors">
+<span class="w-3 h-3 rounded-full bg-primary scale-0 transition-transform"></span>
+</div>
+<span class="flex-1 font-body-md text-body-md">Through the use of standard SQL transactions wrapped in a Node.js try-catch block.</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant group-hover:text-primary">B</span>
+</button>
+<!-- Option C -->
+<button class="option-card group flex items-center gap-4 p-5 border border-outline-variant rounded-xl text-left hover:border-primary hover:bg-surface-container-low transition-all duration-200" onclick="selectOption(this)">
+<div class="radio-indicator w-6 h-6 rounded-full border-2 border-outline-variant flex items-center justify-center group-hover:border-primary transition-colors">
+<span class="w-3 h-3 rounded-full bg-primary scale-0 transition-transform"></span>
+</div>
+<span class="flex-1 font-body-md text-body-md">By relying on the Node.js event loop to process jobs sequentially without concurrency.</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant group-hover:text-primary">C</span>
+</button>
+<!-- Option D -->
+<button class="option-card group flex items-center gap-4 p-5 border border-outline-variant rounded-xl text-left hover:border-primary hover:bg-surface-container-low transition-all duration-200" onclick="selectOption(this)">
+<div class="radio-indicator w-6 h-6 rounded-full border-2 border-outline-variant flex items-center justify-center group-hover:border-primary transition-colors">
+<span class="w-3 h-3 rounded-full bg-primary scale-0 transition-transform"></span>
+</div>
+<span class="flex-1 font-body-md text-body-md">It performs a double-check locking mechanism using temporary files in the local filesystem.</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant group-hover:text-primary">D</span>
+</button>
+</div>
+</div>
+<!-- Action Area -->
+<div class="flex items-center justify-between mt-auto pb-10">
+<button class="flex items-center gap-2 px-6 py-2 border border-outline-variant text-on-surface-variant rounded-full hover:bg-surface-variant transition-all font-body-md">
+<span class="material-symbols-outlined text-[18px]">flag</span>
+                    Report Issue
+                </button>
+<button class="flex items-center gap-2 px-12 py-3 bg-primary text-on-primary rounded-full hover:shadow-lg active:scale-95 transition-all font-headline-md">
+                    Next Question
+                    <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Right Sidebar (Quiz Stats) -->
+<aside class="hidden lg:flex flex-col fixed right-0 top-0 h-full w-96 bg-surface-container-low border-l border-outline-variant p-8 z-40 overflow-y-auto custom-scrollbar">
+<h4 class="font-headline-md text-headline-md mb-8">Session Progress</h4>
+<!-- Progress Bar -->
+<div class="mb-10">
+<div class="flex justify-between items-end mb-3">
+<span class="text-on-surface-variant font-body-md">Overall Completion</span>
+<span class="font-label-mono text-label-mono text-primary">58%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="w-[58%] h-full bg-primary rounded-full"></div>
+</div>
+<p class="text-xs text-on-surface-variant mt-2">Question 7 of 12</p>
+</div>
+<!-- Session Stats Grid -->
+<div class="grid grid-cols-2 gap-4 mb-10">
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-secondary mb-1" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+<span class="font-display text-2xl text-on-surface">14</span>
+<span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-label-mono">Streak</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-primary mb-1" style="font-variation-settings: 'FILL' 1;">target</span>
+<span class="font-display text-2xl text-on-surface">92%</span>
+<span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-label-mono">Accuracy</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-tertiary mb-1" style="font-variation-settings: 'FILL' 1;">timer</span>
+<span class="font-display text-2xl text-on-surface">42s</span>
+<span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-label-mono">Avg Time</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-on-secondary-container mb-1" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+<span class="font-display text-2xl text-on-surface">Top 5%</span>
+<span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-label-mono">Ranking</span>
+</div>
+</div>
+<!-- AI Insight Card -->
+<div class="relative overflow-hidden bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm">
+<!-- Shimmer Background -->
+<div class="absolute inset-0 opacity-40 ai-shimmer pointer-events-none"></div>
+<div class="relative z-10">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<h5 class="font-headline-md text-body-lg text-tertiary">Concept Mastery</h5>
+</div>
+<p class="font-body-md text-on-surface leading-relaxed mb-6">
+                    You've demonstrated consistent strength in <span class="font-semibold text-primary">Redis Architectural Patterns</span>.
+                </p>
+<div class="space-y-4">
+<div class="flex items-start gap-3">
+<div class="mt-1 w-2 h-2 rounded-full bg-secondary shrink-0"></div>
+<div>
+<p class="text-sm font-semibold text-on-surface">Mastered</p>
+<p class="text-xs text-on-surface-variant">Key-Value Eviction Policies</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="mt-1 w-2 h-2 rounded-full bg-tertiary shrink-0"></div>
+<div>
+<p class="text-sm font-semibold text-on-surface">Growing Edge</p>
+<p class="text-xs text-on-surface-variant">Redis Lua Scripting vs Event Loop</p>
+</div>
+</div>
+</div>
+<div class="mt-8">
+<div class="w-full h-32 bg-cover bg-center rounded-xl border border-outline-variant/30" data-alt="A sophisticated data visualization dashboard showing a brain-shaped constellation of nodes. The nodes represent interconnected knowledge concepts like Redis, Distributed Systems, and Node.js. The visual style is high-tech, minimalist, with soft indigo and violet glowing accents on a clean light gray background, suggesting deep intellectual growth and machine learning integration." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAME9kMBI8ue9fJp_9B64HXyHN8A-P3lSUCe9ykdQIPsPsY6dXvgaXTOCpS-gAeanjD5QESj731ydJqDuk1FzZOAq4X-6yr3QzpTzDKKj78RC9F2FDqyU6CYU4m_wgnXMun8kAfJysBQY2FXlE8Tw6dOJhuw5oNJ8q838I2_DODvourH4ElFV1IcJDG2bsHlzdhYoKPwMwlv15P-Ka13buGyGuzpP8AwQZyPynGtxD2g1THZGvmeF_K4_eZiAYP8dfnmyMX9vI-frWg')"></div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Mobile Bottom Nav (Suppressed for Desktop as per rules, but included for responsiveness) -->
+<div class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 px-2 pb-safe bg-surface border-t border-outline-variant shadow-lg">
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-mono text-[10px]">Dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-tertiary-container text-on-tertiary-container rounded-full px-4 py-1">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">book_5</span>
+<span class="font-label-mono text-[10px]">Journal</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">search</span>
+<span class="font-label-mono text-[10px]">Search</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">auto_awesome</span>
+<span class="font-label-mono text-[10px]">AI Coach</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-mono text-[10px]">Analytics</span>
+</div>
+</div>
+<script>
+        function selectOption(element) {
+            // Clear previous selections
+            const options = document.querySelectorAll('.option-card');
+            options.forEach(opt => {
+                opt.classList.remove('border-primary', 'bg-surface-container-low');
+                opt.querySelector('.radio-indicator').classList.remove('border-primary');
+                opt.querySelector('.radio-indicator span').classList.remove('scale-100');
+                opt.querySelector('.radio-indicator span').classList.add('scale-0');
+            });
+
+            // Set new selection
+            element.classList.add('border-primary', 'bg-surface-container-low');
+            element.querySelector('.radio-indicator').classList.add('border-primary');
+            element.querySelector('.radio-indicator span').classList.remove('scale-0');
+            element.querySelector('.radio-indicator span').classList.add('scale-100');
+        }
+
+        // Lightweight animation for the AI pulse
+        document.addEventListener('DOMContentLoaded', () => {
+            const aiLabel = document.querySelector('.animate-pulse');
+            if (aiLabel) {
+                setInterval(() => {
+                    aiLabel.style.opacity = aiLabel.style.opacity === '0.5' ? '1' : '0.5';
+                }, 1500);
+            }
+        });
+    </script>
+</body></html>

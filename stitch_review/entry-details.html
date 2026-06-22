@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LearnFlow AI - Entry Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#dae2fd",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#571ac0",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed": "#23005c",
+                    "background": "#faf8ff",
+                    "on-secondary-container": "#00714d",
+                    "primary-fixed-dim": "#c3c0ff",
+                    "surface-container-low": "#f2f3ff",
+                    "on-primary-fixed": "#0f0069",
+                    "primary": "#3525cd",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-container": "#e3d5ff",
+                    "inverse-primary": "#c3c0ff",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed": "#002113",
+                    "outline": "#777587",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed-variant": "#005236",
+                    "primary-fixed": "#e2dfff",
+                    "surface-container-high": "#e2e7ff",
+                    "secondary-container": "#6cf8bb",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#d0bcff",
+                    "surface": "#faf8ff",
+                    "secondary": "#006c49",
+                    "on-primary-fixed-variant": "#3323cc",
+                    "on-tertiary-fixed-variant": "#5516be",
+                    "primary-container": "#4f46e5",
+                    "tertiary-fixed": "#e9ddff",
+                    "on-background": "#131b2e",
+                    "on-secondary": "#ffffff",
+                    "surface-dim": "#d2d9f4",
+                    "on-primary-container": "#dad7ff",
+                    "tertiary-container": "#6f3dd9",
+                    "surface-container": "#eaedff",
+                    "outline-variant": "#c7c4d8",
+                    "surface-bright": "#faf8ff",
+                    "inverse-surface": "#283044",
+                    "on-error": "#ffffff",
+                    "secondary-fixed": "#6ffbbe",
+                    "on-surface-variant": "#464555",
+                    "surface-tint": "#4d44e3",
+                    "secondary-fixed-dim": "#4edea3",
+                    "surface-container-highest": "#dae2fd",
+                    "on-surface": "#131b2e",
+                    "inverse-on-surface": "#eef0ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "gutter": "24px",
+                    "margin-mobile": "16px",
+                    "container-max": "1200px",
+                    "card-padding": "20px",
+                    "margin-desktop": "40px"
+            },
+            "fontFamily": {
+                    "display": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "label-mono": ["JetBrains Mono"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "display": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-mono": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "26px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #faf8ff;
+            color: #131b2e;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .ai-glow {
+            box-shadow: inset 0 0 12px rgba(87, 26, 192, 0.05), 0 1px 3px rgba(15, 23, 42, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .sparkle-gradient {
+            background: linear-gradient(135deg, #571ac0 0%, #3525cd 100%);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop h-14 z-50 bg-surface dark:bg-surface-dim docked full-width top-0 border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none fixed">
+<div class="flex items-center gap-4">
+<button class="cursor-pointer active:scale-95 text-on-surface-variant hover:bg-surface-container-high transition-colors p-2 rounded-lg">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-display text-display text-primary dark:text-primary-fixed-dim tracking-tight text-[24px]">LearnFlow AI</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="cursor-pointer active:scale-95 text-on-surface-variant hover:bg-surface-container-high transition-colors p-2 rounded-lg">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A clean, minimalist profile photograph of a young professional in a brightly lit, modern workspace with a neutral color palette of whites and soft blues, conveying intelligence and focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaE2YnlIs3i6NVDxpv3egly4froIFUCdfynhz5utMRsyGf_DtGRYGwluZZJHShHndauDtNPsVDQopilhG0usW2vJ7TfuNGvnBw5A6XiACyzELywmDEDGPfXexEghIM_d9RtNCfRXEIPdq4tO5HmKVU70wf-GhFWDKg2YWt2nwvJ9vT8Q_CSybS5rsWG8cEzsFk7UpJdlv9wZbt-lKGHKV7v2N_YmI20zxmPCFSfS1xM4SYho2Tu0tylg0DZfwxfg-Kgs8VzYrSfJ0A"/>
+</div>
+</div>
+</header>
+<!-- Sidebar Navigation (Desktop) -->
+<aside class="hidden lg:flex flex-col h-full py-6 bg-surface-container-low dark:bg-surface-container-highest h-full w-80 fixed left-0 top-14 border-r border-outline-variant z-40">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-4 mb-2">
+<div class="h-12 w-12 rounded-xl bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+</div>
+<div>
+<p class="font-headline-md text-primary font-semibold">Alex Learner</p>
+<p class="text-xs text-on-surface-variant">Pro Member</p>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-4">
+<span class="text-[10px] font-label-mono tracking-widest text-primary animate-pulse">AI SCANNING...</span>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-variant hover:pl-8 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">add_circle</span>
+<span>New Entry</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 bg-primary-container text-on-primary-container font-semibold rounded-r-full" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<span>Reflections</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-variant hover:pl-8 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">library_books</span>
+<span>Library</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-variant hover:pl-8 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="pt-20 pb-24 lg:pl-80 min-h-screen px-margin-mobile md:px-margin-desktop">
+<div class="max-w-container-max mx-auto">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-2 text-xs text-on-surface-variant mb-6 font-label-mono uppercase tracking-wider">
+<span>Journal</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span>Technical Logs</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-primary">Current Entry</span>
+</nav>
+<!-- Title Section -->
+<div class="mb-10">
+<h2 class="font-headline-lg text-headline-lg lg:text-[40px] text-on-background leading-tight max-w-4xl">
+                    Today I learned how BullMQ handles background jobs
+                </h2>
+<div class="flex items-center gap-4 mt-4 text-on-surface-variant">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+<span class="text-sm">October 24, 2023</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span class="text-sm">12 min read</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded text-xs font-medium">
+                        Completed
+                    </div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- Notes Section -->
+<div class="lg:col-span-8 bg-surface-container-lowest border border-outline-variant p-card-padding rounded-xl shadow-sm">
+<div class="prose prose-slate max-w-none">
+<div class="flex items-center justify-between mb-6 border-b border-outline-variant pb-4">
+<span class="font-label-mono text-xs text-on-surface-variant">ORIGINAL NOTES</span>
+<button class="text-primary hover:underline flex items-center gap-1 text-sm font-medium">
+<span class="material-symbols-outlined text-lg">edit</span> Edit Content
+                            </button>
+</div>
+<div class="space-y-6 text-on-surface leading-relaxed font-body-lg">
+<p>BullMQ is built on top of Redis and implements a robust queuing system for Node.js. Unlike simple message brokers, it handles job persistence, retries, and complex job relationships like parent-child dependencies.</p>
+<div class="bg-surface-container-low p-4 rounded-lg border-l-4 border-primary">
+<h4 class="font-semibold text-primary mb-2">The Concurrency Model</h4>
+<p>Concurrency is defined per worker. If you set concurrency to 5, the worker will process up to 5 jobs simultaneously using the same Node.js event loop. This is critical for I/O bound tasks.</p>
+</div>
+<p>One interesting thing I found was the distinction between <code class="bg-surface-variant px-1.5 py-0.5 rounded font-label-mono text-xs">delayed</code> and <code class="bg-surface-variant px-1.5 py-0.5 rounded font-label-mono text-xs">waiting</code> states. A delayed job stays in a special ZSET in Redis until its timestamp is reached, whereas waiting jobs are in a standard LIST ready to be popped by workers.</p>
+<p>Challenges encountered:
+                                </p><ul class="list-disc pl-5 space-y-2 mt-2">
+<li>Understanding how <code class="font-label-mono text-xs">stalled</code> jobs are handled via the lock mechanism.</li>
+<li>Configuring the backoff strategy properly to avoid overloading the database during retries.</li>
+<li>Memory overhead of large job payloads in Redis.</li>
+</ul>
+<p></p>
+<div class="w-full h-64 bg-cover bg-center rounded-lg my-8" data-alt="A clean, architectural diagram representing data flowing through a series of glowing blue nodes in a network, styled as a minimalist blueprint with high-contrast slate and violet tones, emphasizing efficiency and logical structure." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB8vWWILpdjaBcNvNWTqsrcfoMZ49jbKgkmfD1FWPjF0IScIYfPcNZyFCu71EyEFMl5YMFPM_S1pXGfD-rGDLOO6_1hEsdxlflRhc5U2wBKZxWfK8oeX4wstulGMhpXfYIsd4BdzcizfLpnp4cetobjjsaF47guaxqzKWLcj722G-LrN29QziGVntwqSoSFTie2-hBKJDj5DQwGU2eXuHEIF3cuLnpfFRbxp4akGUKtp11NX98BXfLQ4fcy8zAumgMIo35MX306dk9G')"></div>
+<p>Next steps: Implement a sandbox environment to test horizontal scaling of workers and observe how BullMQ redistributes jobs when a worker node fails.</p>
+</div>
+</div>
+</div>
+<!-- AI Sidebar -->
+<div class="lg:col-span-4 space-y-6 sticky top-20">
+<!-- AI Summary Card -->
+<div class="ai-glow bg-white p-6 rounded-xl relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4">
+<span class="material-symbols-outlined text-primary opacity-20 text-4xl">auto_awesome</span>
+</div>
+<h3 class="font-label-mono text-xs text-primary mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">auto_awesome</span> AI ANALYSIS
+                        </h3>
+<p class="font-headline-md text-on-background mb-4 text-lg">Executive Summary</p>
+<p class="text-sm text-on-surface-variant leading-relaxed italic border-l-2 border-tertiary-fixed-dim pl-4">
+                            "An exploration of job queuing and concurrency control focusing on BullMQ's Redis implementation. The entry highlights technical mechanics of state transitions and worker optimization strategies."
+                        </p>
+</div>
+<!-- Key Concepts -->
+<div class="bg-white border border-outline-variant p-6 rounded-xl shadow-sm">
+<h3 class="font-semibold text-on-background mb-4">Key Concepts</h3>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full text-xs font-label-mono">BullMQ</span>
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full text-xs font-label-mono">Redis</span>
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full text-xs font-label-mono">Concurrency</span>
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full text-xs font-label-mono">Event Loop</span>
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full text-xs font-label-mono">ZSET</span>
+</div>
+</div>
+<!-- Strength/Weakness -->
+<div class="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="grid grid-cols-2 text-center text-xs font-label-mono border-b border-outline-variant">
+<div class="py-3 bg-secondary-fixed/10 text-on-secondary-fixed-variant">STRENGTHS</div>
+<div class="py-3 bg-error-container/20 text-on-error-container">GAPS</div>
+</div>
+<div class="p-4 grid grid-cols-2 gap-4">
+<div class="text-[13px] space-y-2">
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-secondary text-sm">check_circle</span>
+<span>Clear understanding of state transitions.</span>
+</div>
+</div>
+<div class="text-[13px] space-y-2">
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-error text-sm">help</span>
+<span>Lacks depth on Redis eviction policies.</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Related Entries -->
+<div class="bg-white border border-outline-variant p-6 rounded-xl shadow-sm">
+<h3 class="font-semibold text-on-background mb-4 flex justify-between items-center">
+                            Related Entries
+                            <span class="text-xs font-normal text-on-surface-variant">3 found</span>
+</h3>
+<ul class="space-y-3">
+<li>
+<a class="group flex items-start gap-3" href="#">
+<span class="material-symbols-outlined text-on-surface-variant mt-1 group-hover:text-primary">link</span>
+<div>
+<p class="text-sm font-medium group-hover:text-primary transition-colors">Redis Data Structures Overview</p>
+<p class="text-[10px] font-label-mono text-on-surface-variant">Last updated 2 days ago</p>
+</div>
+</a>
+</li>
+<li>
+<a class="group flex items-start gap-3" href="#">
+<span class="material-symbols-outlined text-on-surface-variant mt-1 group-hover:text-primary">link</span>
+<div>
+<p class="text-sm font-medium group-hover:text-primary transition-colors">Node.js Performance Tuning</p>
+<p class="text-[10px] font-label-mono text-on-surface-variant">Last updated 1 week ago</p>
+</div>
+</a>
+</li>
+</ul>
+</div>
+<!-- Primary CTA -->
+<button class="w-full sparkle-gradient text-on-primary py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-3">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">quiz</span>
+                        Generate Quiz from this Entry
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 px-2 pb-safe bg-surface dark:bg-surface-dim docked full-width rounded-t-xl border-t border-outline-variant dark:border-outline shadow-lg dark:shadow-none">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-mono text-label-mono mt-1">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-tertiary-container text-on-tertiary-container rounded-full px-4 py-1 active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">book_5</span>
+<span class="font-label-mono text-label-mono mt-1">Journal</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="font-label-mono text-label-mono mt-1">Search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">auto_awesome</span>
+<span class="font-label-mono text-label-mono mt-1">AI Coach</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-mono text-label-mono mt-1">Analytics</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for the "Generate Quiz" button
+        const quizBtn = document.querySelector('.sparkle-gradient');
+        if(quizBtn) {
+            quizBtn.addEventListener('mouseenter', () => {
+                quizBtn.style.background = 'linear-gradient(135deg, #6f3dd9 0%, #4f46e5 100%)';
+            });
+            quizBtn.addEventListener('mouseleave', () => {
+                quizBtn.style.background = 'linear-gradient(135deg, #571ac0 0%, #3525cd 100%)';
+            });
+        }
+
+        // Toggle mobile drawer logic (placeholder)
+        const menuBtn = document.querySelector('header button span[data-icon="menu"]');
+        if(menuBtn) {
+            menuBtn.closest('button').addEventListener('click', () => {
+                alert('Navigation drawer would open here on mobile.');
+            });
+        }
+    </script>
+</body></html>
