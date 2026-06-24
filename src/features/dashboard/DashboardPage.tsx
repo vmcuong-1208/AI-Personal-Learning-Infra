@@ -1,18 +1,49 @@
-import { ArrowRight, PenLine } from "lucide-react";
+import { ArrowRight, LogIn, PenLine, Sparkles, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AiPanel, Button, Card, ChartCard, Chip, MetricCard, PageHeader, ProgressBar } from "../../components/ui";
 import { aiInsights, analyticsSummary, journalEntries, topics, weeklyActivity } from "../../data/mock/mockData";
+import { useAuth } from "../auth/AuthContext";
 
 export function DashboardPage() {
+  const auth = useAuth();
+  const location = useLocation();
+  const authMessage = (location.state as { authMessage?: string } | null)?.authMessage;
+
   return (
     <>
       <PageHeader
         eyebrow="Today"
         title="Learning dashboard"
         description="A focused control room for capture, recall, coaching, and momentum."
-        action={<Button to="/journal/new" icon={<PenLine size={17} />}>New Entry</Button>}
+        action={
+          <div className="dashboard-auth-actions">
+            {auth.isAuthenticated && auth.user ? (
+              <div className="account-pill" aria-label={`Signed in as ${auth.user.name}`}>
+                <span className="brand-mark small"><Sparkles size={16} /></span>
+                <span>
+                  <strong>{auth.user.name}</strong>
+                  <small>{auth.user.provider === "google" ? "Google account" : auth.user.email}</small>
+                </span>
+                <Button variant="ghost" size="sm" onClick={auth.logout}>Logout</Button>
+              </div>
+            ) : (
+              <>
+                <Button to="/auth/register" variant="secondary" icon={<UserPlus size={17} />}>Đăng ký</Button>
+                <Button to="/auth/login" icon={<LogIn size={17} />}>Đăng nhập</Button>
+              </>
+            )}
+            <Button to="/journal/new" icon={<PenLine size={17} />}>New Entry</Button>
+          </div>
+        }
       />
+      {auth.isAuthenticated && auth.user && (
+        <div className="login-success" role="status">
+          <Sparkles size={17} />
+          <span>{authMessage ?? `Đăng nhập thành công: ${auth.user.name}`}</span>
+        </div>
+      )}
       <section className="metric-row">
         <MetricCard label="Streak" value={`${analyticsSummary.streak}d`} detail="Consistent capture" tone="success" />
         <MetricCard label="This Week" value={`${analyticsSummary.weeklyMinutes}m`} detail="Deep learning time" />
