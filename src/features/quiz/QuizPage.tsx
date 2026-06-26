@@ -26,24 +26,17 @@ export function QuizPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Recall" title="Knowledge quiz" description="Practice the concepts most likely to decay without review." />
+      <PageHeader eyebrow="Ôn tập" title="Quiz kiến thức" description="Luyện lại những khái niệm dễ quên nếu không được ôn định kỳ." />
       <div className="quiz-grid">
         <Card>
-          <div className="section-heading">
-            <Chip tone="ai">{question.topic}</Chip>
-            <h2>{question.prompt}</h2>
-          </div>
+          <div className="section-heading"><Chip tone="ai">{question.topic}</Chip><h2>{question.prompt}</h2></div>
           <div className="stack">
             {question.options.map((option, optionIndex) => {
               const chosen = selected === optionIndex;
               const correctOption = selected !== null && question.answerIndex === optionIndex;
               const wrongOption = chosen && !correctOption;
               return (
-                <button
-                  className={`answer-option${chosen ? " is-selected" : ""}${correctOption ? " is-correct" : ""}${wrongOption ? " is-wrong" : ""}`}
-                  key={option}
-                  onClick={() => choose(optionIndex)}
-                >
+                <button className={`answer-option${chosen ? " is-selected" : ""}${correctOption ? " is-correct" : ""}${wrongOption ? " is-wrong" : ""}`} key={option} onClick={() => choose(optionIndex)}>
                   <strong>{String.fromCharCode(65 + optionIndex)}.</strong>
                   <span>{option}</span>
                 </button>
@@ -52,25 +45,22 @@ export function QuizPage() {
           </div>
           {selected !== null && (
             <Card style={{ marginTop: 16 }}>
-              <strong>{isCorrectAnswer(question, selected) ? "Correct" : "Review this"}</strong>
+              <strong>{isCorrectAnswer(question, selected) ? "Đúng" : "Cần ôn lại"}</strong>
               <p>{question.explanation}</p>
-              <Button onClick={next} icon={<ArrowRight size={17} />}>Next Question</Button>
+              <Button onClick={next} icon={<ArrowRight size={17} />}>Câu tiếp theo</Button>
             </Card>
           )}
         </Card>
         <aside className="stack">
           <Card>
-            <div className="section-heading">
-              <h2>Session</h2>
-              <p>Progress through today's recall queue.</p>
-            </div>
+            <div className="section-heading"><h2>Phiên ôn tập</h2><p>Tiến độ trong hàng đợi câu hỏi hôm nay.</p></div>
             <ProgressBar value={((index + 1) / quizQuestions.length) * 100} />
-            <p><strong>{index + 1}</strong> of {quizQuestions.length} questions</p>
+            <p><strong>{index + 1}</strong> / {quizQuestions.length} câu hỏi</p>
           </Card>
           <Card>
-            <span className="mono-label">ACCURACY</span>
+            <span className="mono-label">ĐỘ CHÍNH XÁC</span>
             <h2>{accuracy}%</h2>
-            <p>{correct} correct from {answered} answered.</p>
+            <p>{correct} câu đúng trên {answered} câu đã trả lời.</p>
           </Card>
         </aside>
       </div>

@@ -1,57 +1,65 @@
-import { Bot, Trophy } from "lucide-react";
+import { Bot, Pencil, Trophy } from "lucide-react";
 import { useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { AiPanel, Button, Card, Chip, PageHeader, ProgressBar } from "../../components/ui";
-import { aiInsights, journalEntries } from "../../data/mock/mockData";
+import { aiInsights } from "../../data/mock/mockData";
+import { getLearningLog, getLearningLogs } from "./journalData";
+
+const moodLabels: Record<string, string> = { good: "Tốt", neutral: "Bình thường", tired: "Mệt" };
 
 export function EntryDetailsPage() {
   const { entryId } = useParams();
-  const entry = useMemo(() => journalEntries.find((item) => item.id === entryId) ?? journalEntries[0], [entryId]);
-  const related = journalEntries.filter((item) => item.id !== entry.id).slice(0, 2);
+  const entry = useMemo(() => getLearningLog(entryId ?? "") ?? getLearningLogs()[0], [entryId]);
+  const related = getLearningLogs().filter((item) => item.id !== entry?.id).slice(0, 2);
+
+  if (!entry) return null;
 
   return (
     <>
       <PageHeader
-        eyebrow={entry.date}
+        eyebrow={`${entry.date} · ${entry.startTime ?? "--:--"} - ${entry.endTime ?? "--:--"}`}
         title={entry.title}
-        description={entry.summary}
-        action={<Button to="/coach" variant="ai" icon={<Bot size={17} />}>Ask AI</Button>}
+        description={`${entry.category} · Tâm trạng: ${moodLabels[entry.mood]} · Độ khó: ${entry.difficulty}/5`}
+        action={
+          <div className="page-actions">
+            <Button to={`/journal/${entry.id}/edit`} variant="ghost" icon={<Pencil size={17} />}>Chỉnh sửa</Button>
+            <Button to="/coach" variant="ai" icon={<Bot size={17} />}>Hỏi AI</Button>
+          </div>
+        }
       />
       <div className="detail-grid">
         <Card>
           <div className="page-actions" style={{ marginBottom: 14 }}>
-            {entry.topics.map((topic) => <Chip key={topic} tone="primary">{topic}</Chip>)}
-            <Chip tone="success">{entry.mood}</Chip>
+            {entry.tags.map((tag) => <Chip key={tag} tone="primary">{tag}</Chip>)}
+            <Chip tone="success">{moodLabels[entry.mood]}</Chip>
           </div>
           <article className="article-body">
+            <h2>Nhật ký chi tiết</h2>
             <p>{entry.content}</p>
-            <p>The most useful pattern is to name what changes state, what can be retried, and what should be reviewed by a human. That framing makes infrastructure notes easier to convert into tests and quiz prompts.</p>
+            {entry.commands && <><h2>Lệnh / hành động</h2><pre className="detail-code">{entry.commands}</pre></>}
+            {entry.errors && <><h2>Lỗi gặp phải</h2><div className="error-highlight">{entry.errors}</div></>}
+            {entry.solutions && <><h2>Cách xử lý / sửa lỗi</h2><p>{entry.solutions}</p></>}
           </article>
         </Card>
         <aside className="stack">
-          <AiPanel title="Entry synthesis" action={<Button to="/quiz" variant="secondary" size="sm" icon={<Trophy size={16} />}>Create Quiz</Button>}>
+          <AiPanel title="Tổng hợp bằng AI" action={<Button to="/quiz" variant="secondary" size="sm" icon={<Trophy size={16} />}>Tạo quiz</Button>}>
             <p>{aiInsights[0].body}</p>
           </AiPanel>
           <Card>
             <div className="section-heading">
-              <h2>Confidence</h2>
-              <p>Self-rated understanding after capture.</p>
+              <h2>Độ khó</h2>
+              <p>Mức độ phức tạp do bạn tự đánh giá cho buổi học này.</p>
             </div>
-            <ProgressBar value={entry.confidence} />
-            <p><strong>{entry.confidence}%</strong> mastery signal</p>
+            <ProgressBar value={entry.difficulty * 20} />
+            <p><strong>{entry.difficulty}/5</strong> tín hiệu độ khó</p>
           </Card>
           <Card>
-            <div className="section-heading">
-              <h2>Related notes</h2>
-            </div>
+            <div className="section-heading"><h2>Ghi chú liên quan</h2></div>
             <div className="entry-list">
               {related.map((item) => (
-                <a className="entry-item" href={`/journal/${item.id}`} key={item.id}>
-                  <div>
-                    <h3>{item.title}</h3>
-                    <p>{item.summary}</p>
-                  </div>
-                </a>
+                <Link className="entry-item" to={`/journal/${item.id}`} key={item.id}>
+                  <div><h3>{item.title}</h3><p>{item.content.slice(0, 120)}...</p></div>
+                </Link>
               ))}
             </div>
           </Card>

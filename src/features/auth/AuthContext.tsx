@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return {
       user,
       isAuthenticated: Boolean(user),
-      loginWithPassword: (email) => commit(createSessionUser(email.split("@")[0] || "Learner", email, "password")),
+      loginWithPassword: (email) => commit(createSessionUser(email.split("@")[0] || "Người học", email, "password")),
       registerWithPassword: (name, email) => commit(createSessionUser(name, email, "password")),
       logout: () => {
         setUser(null);
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       startGoogleLogin: () => {
         const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
         if (!clientId || clientId.includes("your-google-oauth-client-id")) {
-          return { ok: false, message: "Google OAuth client ID is not configured. Add VITE_GOOGLE_CLIENT_ID to .env." };
+          return { ok: false, message: "Chưa cấu hình Google OAuth client ID. Hãy thêm VITE_GOOGLE_CLIENT_ID vào file .env." };
         }
 
         const state = randomState();
@@ -77,10 +77,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const expectedState = sessionStorage.getItem(GOOGLE_OAUTH_STATE_KEY);
         sessionStorage.removeItem(GOOGLE_OAUTH_STATE_KEY);
         if (!state || !expectedState || state !== expectedState) {
-          return { ok: false, message: "Google OAuth state could not be verified. Please try again." };
+          return { ok: false, message: "Không xác minh được trạng thái OAuth. Vui lòng thử lại." };
         }
 
-        return { ok: true, message: "Google authorization code received. Complete token exchange and ID-token verification on the backend before creating a session." };
+        return { ok: true, message: "Đã nhận mã ủy quyền Google. Backend cần đổi mã, xác minh ID token và tạo phiên đăng nhập an toàn." };
       }
     };
   }, [user]);
@@ -90,6 +90,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used inside AuthProvider");
+  if (!context) throw new Error("useAuth phải được dùng bên trong AuthProvider");
   return context;
 }

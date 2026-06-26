@@ -1,16 +1,19 @@
-import { BarChart3, Bot, Home, Menu, PenLine, Search, Sparkles, Trophy, X } from "lucide-react";
+import { BarChart3, Bell, Bot, CircleHelp, Home, LogOut, Menu, PenLine, Search, Settings, Sparkles, Trophy, X } from "lucide-react";
 import type { ReactNode } from "react";
-import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import { journalEntries } from "../../data/mock/mockData";
+import { useAuth } from "../../features/auth/AuthContext";
+import { filterEntries } from "../../lib/search";
 import { Button, IconButton } from "../ui";
 
 const navItems = [
-  { to: "/", label: "Dashboard", icon: Home },
-  { to: "/journal/new", label: "Journal", icon: PenLine },
-  { to: "/coach", label: "Coach", icon: Bot },
-  { to: "/search", label: "Search", icon: Search },
-  { to: "/quiz", label: "Quiz", icon: Trophy },
-  { to: "/analytics", label: "Analytics", icon: BarChart3 }
+  { to: "/", label: "Tổng quan", icon: Home },
+  { to: "/journal", label: "Nhật ký", icon: PenLine },
+  { to: "/coach", label: "Huấn luyện AI", icon: Bot },
+  { to: "/search", label: "Tìm kiếm", icon: Search },
+  { to: "/quiz", label: "Ôn tập", icon: Trophy },
+  { to: "/analytics", label: "Phân tích", icon: BarChart3 }
 ];
 
 function navClass({ isActive }: { isActive: boolean }) {
@@ -20,11 +23,11 @@ function navClass({ isActive }: { isActive: boolean }) {
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
-      <NavLink to="/" className="brand-block" aria-label="LearnFlow home" onClick={onNavigate}>
+      <NavLink to="/" className="brand-block" aria-label="Trang chủ LearnFlow" onClick={onNavigate}>
         <span className="brand-mark"><Sparkles size={20} /></span>
         <span>
           <strong>LearnFlow</strong>
-          <small>AI Dashboard</small>
+          <small>Bảng điều khiển AI</small>
         </span>
       </NavLink>
       <nav className="sidebar-nav">
@@ -36,10 +39,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </nav>
       <div className="sidebar-card" onClick={onNavigate}>
-        <span className="mono-label">WEEKLY FOCUS</span>
-        <strong>System design fluency</strong>
-        <p>3 review blocks left before Friday.</p>
-        <Button to="/journal/new" size="sm">New Entry</Button>
+        <span className="mono-label">TRỌNG TÂM TUẦN</span>
+        <strong>Thiết kế hệ thống vững hơn</strong>
+        <p>Còn 3 phiên ôn tập trước thứ Sáu.</p>
+        <Button to="/journal/new" size="sm">Ghi nhật ký mới</Button>
       </div>
     </>
   );
@@ -47,30 +50,104 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
+  const auth = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const isJournalDetail = location.pathname.startsWith("/journal/") && location.pathname !== "/journal/new";
+  const isJournalList = location.pathname === "/journal";
+  const searchSuggestions = useMemo(() => filterEntries(journalEntries, query, "").slice(0, 4), [query]);
+
+  function closeMenus() {
+    setIsNotificationsOpen(false);
+    setIsAccountOpen(false);
+  }
 
   return (
-    <div className="app-shell">
-      <aside className="desktop-sidebar" aria-label="Main navigation">
+    <div className={`app-shell${isJournalList ? " journal-list-shell" : ""}`}>
+      <aside className="desktop-sidebar" aria-label="Điều hướng chính">
         <SidebarContent />
       </aside>
-      <header className="mobile-topbar">
-        <IconButton label="Open navigation menu" onClick={() => setIsMobileMenuOpen(true)}>
+      <header className="app-navbar">
+        <IconButton label="Mở menu điều hướng" onClick={() => setIsMobileMenuOpen(true)}>
           <Menu size={20} />
         </IconButton>
-        <NavLink to="/" className="mobile-brand" aria-label="LearnFlow home">
+        <NavLink to="/" className="navbar-brand" aria-label="Trang chủ LearnFlow" onClick={closeMenus}>
           <span className="brand-mark small"><Sparkles size={16} /></span>
           <span>LearnFlow</span>
         </NavLink>
+        <div className="navbar-search">
+          <Search size={18} aria-hidden="true" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Tìm kiếm các khái niệm, ghi chú hoặc thông tin chi tiết từ AI"
+            aria-label="Tìm kiếm các khái niệm, ghi chú hoặc thông tin chi tiết từ AI"
+          />
+          {query.trim() && (
+            <div className="search-suggestions" role="listbox" aria-label="Gợi ý tìm kiếm">
+              {searchSuggestions.length > 0 ? (
+                searchSuggestions.map((entry) => (
+                  <Link key={entry.id} to={`/journal/${entry.id}`} role="option" onClick={() => setQuery("")}>
+                    <strong>{entry.title}</strong>
+                    <span>{entry.summary}</span>
+                  </Link>
+                ))
+              ) : (
+                <div className="empty-suggestion">Không tìm thấy gợi ý phù hợp.</div>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="navbar-actions">
+          <div className="dropdown-wrap">
+            <IconButton label="Mở thông báo" onClick={() => { setIsNotificationsOpen((current) => !current); setIsAccountOpen(false); }}>
+              <Bell size={18} />
+            </IconButton>
+            <span className="notification-dot" aria-hidden="true" />
+            {isNotificationsOpen && (
+              <div className="dropdown-panel notification-panel">
+                <span className="mono-label">THÔNG BÁO</span>
+                <strong>Nhắc nhở học tập</strong>
+                <p>Hôm nay nên ôn lại Kubernetes probes.</p>
+                <p>Đã có 2 câu hỏi Redis sẵn sàng để luyện tập.</p>
+                <p>Mục tiêu tuần đã hoàn thành 72%.</p>
+              </div>
+            )}
+          </div>
+          {auth.isAuthenticated && auth.user ? (
+            <div className="dropdown-wrap">
+              <button className="account-trigger" aria-label={`Menu tài khoản của ${auth.user.name}`} onClick={() => { setIsAccountOpen((current) => !current); setIsNotificationsOpen(false); }}>
+                <span className="avatar">{auth.user.name.slice(0, 1).toUpperCase()}</span>
+                <span className="account-trigger-text">
+                  <strong>{auth.user.name}</strong>
+                  <small>{auth.user.email}</small>
+                </span>
+              </button>
+              {isAccountOpen && (
+                <div className="dropdown-panel account-menu">
+                  <Link to="/account/settings" onClick={closeMenus}><Settings size={16} /> Cài đặt tài khoản</Link>
+                  <Link to="/help" onClick={closeMenus}><CircleHelp size={16} /> Trung tâm trợ giúp</Link>
+                  <button onClick={() => { auth.logout(); closeMenus(); }}><LogOut size={16} /> Đăng xuất</button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="auth-nav-actions">
+              <Button to="/auth/register" variant="secondary" size="sm">Đăng ký</Button>
+              <Button to="/auth/login" size="sm">Đăng nhập</Button>
+            </div>
+          )}
+        </div>
       </header>
       {isMobileMenuOpen && (
         <div className="mobile-sidebar-layer" role="presentation">
-          <button className="mobile-sidebar-backdrop" aria-label="Close navigation menu" onClick={() => setIsMobileMenuOpen(false)} />
-          <aside className="mobile-sidebar" aria-label="Main navigation">
+          <button className="mobile-sidebar-backdrop" aria-label="Đóng menu điều hướng" onClick={() => setIsMobileMenuOpen(false)} />
+          <aside className="mobile-sidebar" aria-label="Điều hướng chính">
             <div className="mobile-sidebar-head">
-              <span className="mono-label">Navigation</span>
-              <IconButton label="Close navigation menu" onClick={() => setIsMobileMenuOpen(false)}>
+              <span className="mono-label">ĐIỀU HƯỚNG</span>
+              <IconButton label="Đóng menu điều hướng" onClick={() => setIsMobileMenuOpen(false)}>
                 <X size={18} />
               </IconButton>
             </div>

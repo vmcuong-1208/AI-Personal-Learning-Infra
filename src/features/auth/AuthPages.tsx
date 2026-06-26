@@ -13,14 +13,14 @@ function AuthLayout({ title, description, children }: { title: string; descripti
   );
 }
 
-function PasswordInput({ value, onChange, error, label = "Password" }: { value: string; onChange: (value: string) => void; error?: string; label?: string }) {
+function PasswordInput({ value, onChange, error, label = "Mật khẩu" }: { value: string; onChange: (value: string) => void; error?: string; label?: string }) {
   const [visible, setVisible] = useState(false);
   return (
     <div className="form-field">
       <label htmlFor={label}>{label}</label>
       <div className="password-row">
         <Input id={label} type={visible ? "text" : "password"} value={value} onChange={(event) => onChange(event.target.value)} autoComplete="current-password" />
-        <IconButton label={visible ? "Hide password" : "Show password"} type="button" onClick={() => setVisible((current) => !current)}>
+        <IconButton label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"} type="button" onClick={() => setVisible((current) => !current)}>
           {visible ? <EyeOff size={17} /> : <Eye size={17} />}
         </IconButton>
       </div>
@@ -52,9 +52,9 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout title="Sign in to LearnFlow" description="Use your account password or continue with Google when OAuth is configured.">
+    <AuthLayout title="Đăng nhập LearnFlow" description="Đăng nhập bằng mật khẩu hoặc tiếp tục với Google khi OAuth đã được cấu hình.">
       <Card className="auth-card">
-        <PageHeader eyebrow="Welcome back" title="Đăng nhập" description="Choose password login or Google OAuth." />
+        <PageHeader eyebrow="Chào mừng trở lại" title="Đăng nhập" description="Chọn đăng nhập thường hoặc đăng nhập bằng Google." />
         <form className="auth-form" onSubmit={submit}>
           <div className="form-field">
             <label htmlFor="login-email">Email</label>
@@ -67,10 +67,10 @@ export function LoginPage() {
           </div>
           <Button type="submit">Đăng nhập</Button>
         </form>
-        <div className="auth-divider"><span>or</span></div>
+        <div className="auth-divider"><span>hoặc</span></div>
         <Button type="button" variant="ghost" className="google-button" onClick={googleLogin}>
           <span className="google-g">G</span>
-          Continue with Google
+          Đăng nhập bằng Google
         </Button>
         {message && <p className="auth-message">{message}</p>}
         <p className="auth-footnote">Chưa có tài khoản? <Link to="/auth/register">Đăng ký</Link></p>
@@ -82,7 +82,7 @@ export function LoginPage() {
 export function RegisterPage() {
   const auth = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState("LearnFlow User");
+  const [name, setName] = useState("Người học LearnFlow");
   const [email, setEmail] = useState("learner@example.com");
   const [password, setPassword] = useState("LearnFlow1");
   const [confirmPassword, setConfirmPassword] = useState("LearnFlow1");
@@ -98,12 +98,12 @@ export function RegisterPage() {
   }
 
   return (
-    <AuthLayout title="Create your learning account" description="A simple account setup for personal learning history and future sync.">
+    <AuthLayout title="Tạo tài khoản học tập" description="Thiết lập tài khoản để lưu lịch sử học tập và đồng bộ dữ liệu về sau.">
       <Card className="auth-card">
-        <PageHeader eyebrow="New account" title="Đăng ký tài khoản" description="Use a strong password. This MVP keeps only the session profile in browser storage." />
+        <PageHeader eyebrow="Tài khoản mới" title="Đăng ký tài khoản" description="Hãy dùng mật khẩu mạnh. MVP hiện chỉ lưu hồ sơ phiên tối thiểu trong trình duyệt." />
         <form className="auth-form" onSubmit={submit}>
           <div className="form-field">
-            <label htmlFor="register-name">Name</label>
+            <label htmlFor="register-name">Tên hiển thị</label>
             <Input id="register-name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" />
             {errors.name && <p className="field-error">{errors.name}</p>}
           </div>
@@ -112,8 +112,8 @@ export function RegisterPage() {
             <Input id="register-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" />
             {errors.email && <p className="field-error">{errors.email}</p>}
           </div>
-          <PasswordInput value={password} onChange={setPassword} error={errors.password} label="Create password" />
-          <PasswordInput value={confirmPassword} onChange={setConfirmPassword} error={errors.confirmPassword} label="Confirm password" />
+          <PasswordInput value={password} onChange={setPassword} error={errors.password} label="Tạo mật khẩu" />
+          <PasswordInput value={confirmPassword} onChange={setConfirmPassword} error={errors.confirmPassword} label="Xác nhận mật khẩu" />
           <Button type="submit">Đăng ký</Button>
         </form>
         <p className="auth-footnote">Đã có tài khoản? <Link to="/auth/login">Đăng nhập</Link></p>
@@ -136,15 +136,15 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <AuthLayout title="Reset access safely" description="Request a reset link without exposing account details.">
+    <AuthLayout title="Khôi phục quyền truy cập" description="Yêu cầu liên kết đặt lại mật khẩu mà không làm lộ trạng thái tài khoản.">
       <Card className="auth-card">
-        <PageHeader eyebrow="Account recovery" title="Quên mật khẩu" description="Enter your account email. The production backend should send a short-lived reset link." />
+        <PageHeader eyebrow="Khôi phục tài khoản" title="Quên mật khẩu" description="Nhập email tài khoản. Backend production sẽ gửi liên kết đặt lại mật khẩu có thời hạn ngắn." />
         {sent ? (
           <div className="success-panel">
             <CheckCircle2 size={28} />
-            <h2>Reset link requested</h2>
-            <p>If an account exists for {email}, a password reset link will be sent shortly.</p>
-            <Button to="/auth/login" variant="secondary">Back to login</Button>
+            <h2>Đã yêu cầu liên kết đặt lại</h2>
+            <p>Nếu tồn tại tài khoản với email {email}, liên kết đặt lại mật khẩu sẽ được gửi trong ít phút.</p>
+            <Button to="/auth/login" variant="secondary">Quay lại đăng nhập</Button>
           </div>
         ) : (
           <form className="auth-form" onSubmit={submit}>
@@ -153,7 +153,7 @@ export function ForgotPasswordPage() {
               <Input id="reset-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" />
               {errors.email && <p className="field-error">{errors.email}</p>}
             </div>
-            <Button type="submit" icon={<Mail size={17} />}>Send reset link</Button>
+            <Button type="submit" icon={<Mail size={17} />}>Gửi liên kết đặt lại</Button>
           </form>
         )}
       </Card>
@@ -165,13 +165,13 @@ export function GoogleCallbackPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const auth = useAuth();
-  const [message, setMessage] = useState("Verifying Google sign-in...");
+  const [message, setMessage] = useState("Đang xác minh đăng nhập Google...");
 
   useEffect(() => {
     const code = params.get("code");
     const state = params.get("state");
     if (!code) {
-      setMessage("Google did not return an authorization code.");
+      setMessage("Google không trả về mã ủy quyền.");
       return;
     }
 
@@ -180,9 +180,9 @@ export function GoogleCallbackPage() {
   }, [auth, navigate, params]);
 
   return (
-    <AuthLayout title="Google sign-in" description="Completing OAuth state verification.">
+    <AuthLayout title="Đăng nhập Google" description="Hoàn tất bước xác minh trạng thái OAuth.">
       <Card className="auth-card">
-        <PageHeader eyebrow="OAuth" title="Google callback" description={message} />
+        <PageHeader eyebrow="OAuth" title="Callback Google" description={message} />
       </Card>
     </AuthLayout>
   );

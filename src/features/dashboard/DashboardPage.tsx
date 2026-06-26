@@ -1,6 +1,5 @@
-import { ArrowRight, LogIn, PenLine, Sparkles, UserPlus } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import { ArrowRight, PenLine, Sparkles } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AiPanel, Button, Card, ChartCard, Chip, MetricCard, PageHeader, ProgressBar } from "../../components/ui";
 import { aiInsights, analyticsSummary, journalEntries, topics, weeklyActivity } from "../../data/mock/mockData";
@@ -14,29 +13,10 @@ export function DashboardPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Today"
-        title="Learning dashboard"
-        description="A focused control room for capture, recall, coaching, and momentum."
-        action={
-          <div className="dashboard-auth-actions">
-            {auth.isAuthenticated && auth.user ? (
-              <div className="account-pill" aria-label={`Signed in as ${auth.user.name}`}>
-                <span className="brand-mark small"><Sparkles size={16} /></span>
-                <span>
-                  <strong>{auth.user.name}</strong>
-                  <small>{auth.user.provider === "google" ? "Google account" : auth.user.email}</small>
-                </span>
-                <Button variant="ghost" size="sm" onClick={auth.logout}>Logout</Button>
-              </div>
-            ) : (
-              <>
-                <Button to="/auth/register" variant="secondary" icon={<UserPlus size={17} />}>Đăng ký</Button>
-                <Button to="/auth/login" icon={<LogIn size={17} />}>Đăng nhập</Button>
-              </>
-            )}
-            <Button to="/journal/new" icon={<PenLine size={17} />}>New Entry</Button>
-          </div>
-        }
+        eyebrow="Hôm nay"
+        title="Bảng điều khiển học tập"
+        description="Không gian tập trung để ghi chép, ôn tập, nhận gợi ý AI và theo dõi tiến độ."
+        action={<Button to="/journal/new" icon={<PenLine size={17} />}>Ghi nhật ký mới</Button>}
       />
       {auth.isAuthenticated && auth.user && (
         <div className="login-success" role="status">
@@ -45,20 +25,20 @@ export function DashboardPage() {
         </div>
       )}
       <section className="metric-row">
-        <MetricCard label="Streak" value={`${analyticsSummary.streak}d`} detail="Consistent capture" tone="success" />
-        <MetricCard label="This Week" value={`${analyticsSummary.weeklyMinutes}m`} detail="Deep learning time" />
-        <MetricCard label="Recall" value={`${analyticsSummary.recallAccuracy}%`} detail="Quiz accuracy" tone="ai" />
-        <MetricCard label="Entries" value={`${analyticsSummary.entriesThisWeek}`} detail="Notes captured" />
+        <MetricCard label="Chuỗi học" value={`${analyticsSummary.streak} ngày`} detail="Duy trì thói quen ghi chép" tone="success" />
+        <MetricCard label="Tuần này" value={`${analyticsSummary.weeklyMinutes} phút`} detail="Thời gian học sâu" />
+        <MetricCard label="Ghi nhớ" value={`${analyticsSummary.recallAccuracy}%`} detail="Độ chính xác quiz" tone="ai" />
+        <MetricCard label="Nhật ký" value={`${analyticsSummary.entriesThisWeek}`} detail="Ghi chú đã lưu" />
       </section>
       <div className="dashboard-grid" style={{ marginTop: 16 }}>
         <div className="stack">
           <Card className="hero-card">
-            <span className="mono-label">NEXT BEST ACTION</span>
-            <h2>Review queues, then turn one weak spot into a quiz.</h2>
-            <p>System design is moving well. Kubernetes still needs a tighter feedback loop before you add new concepts.</p>
-            <Button to="/quiz" variant="success" icon={<ArrowRight size={17} />}>Start Practice</Button>
+            <span className="mono-label">HÀNH ĐỘNG TIẾP THEO</span>
+            <h2>Ôn lại hàng đợi học tập, rồi biến một điểm yếu thành quiz.</h2>
+            <p>Thiết kế hệ thống đang tiến triển tốt. Kubernetes vẫn cần vòng phản hồi chặt hơn trước khi thêm khái niệm mới.</p>
+            <Button to="/quiz" variant="success" icon={<ArrowRight size={17} />}>Bắt đầu ôn tập</Button>
           </Card>
-          <ChartCard title="Weekly activity" detail="Minutes and entry rhythm across the current week.">
+          <ChartCard title="Hoạt động trong tuần" detail="Số phút học và nhịp ghi nhật ký theo từng ngày.">
             <div className="mini-chart">
               <ResponsiveContainer>
                 <BarChart data={weeklyActivity}>
@@ -73,8 +53,8 @@ export function DashboardPage() {
           </ChartCard>
           <Card>
             <div className="section-heading">
-              <h2>Recent entries</h2>
-              <p>Open a note to inspect its summary, concepts, and follow-up actions.</p>
+              <h2>Nhật ký gần đây</h2>
+              <p>Mở một ghi chú để xem tóm tắt, khái niệm chính và hành động tiếp theo.</p>
             </div>
             <div className="entry-list">
               {journalEntries.slice(0, 3).map((entry) => (
@@ -90,20 +70,20 @@ export function DashboardPage() {
           </Card>
         </div>
         <aside className="stack">
-          <AiPanel title={aiInsights[0].title} action={<Button to="/coach" variant="ai" size="sm">Ask Coach</Button>}>
+          <AiPanel title={aiInsights[0].title} action={<Button to="/coach" variant="ai" size="sm">Hỏi huấn luyện AI</Button>}>
             <p>{aiInsights[0].body}</p>
           </AiPanel>
           <Card>
             <div className="section-heading">
-              <h2>Topic mastery</h2>
-              <p>Current learning map based on notes and quiz feedback.</p>
+              <h2>Mức độ thành thạo theo chủ đề</h2>
+              <p>Bản đồ học tập hiện tại dựa trên ghi chú và phản hồi quiz.</p>
             </div>
             <div className="topic-list">
               {topics.map((topic) => (
                 <div className="topic-row" key={topic.id}>
                   <div>
                     <strong>{topic.name}</strong>
-                    <ProgressBar value={topic.mastery} label={`${topic.name} mastery`} />
+                    <ProgressBar value={topic.mastery} label={`Mức thành thạo ${topic.name}`} />
                   </div>
                   <span className="mono-label">{topic.mastery}%</span>
                 </div>
@@ -112,8 +92,8 @@ export function DashboardPage() {
           </Card>
           <Card>
             <div className="section-heading">
-              <h2>Weekly goal</h2>
-              <p>Write 10 concise entries and answer 12 recall prompts.</p>
+              <h2>Mục tiêu tuần</h2>
+              <p>Viết 10 nhật ký ngắn và trả lời 12 câu hỏi ôn tập.</p>
             </div>
             <ProgressBar value={72} />
           </Card>

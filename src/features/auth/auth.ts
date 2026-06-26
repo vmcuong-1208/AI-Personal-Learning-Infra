@@ -18,24 +18,25 @@ export function validateEmail(email: string) {
 
 export function validateLogin(email: string, password: string): AuthValidationResult {
   const errors: Record<string, string> = {};
-  if (!validateEmail(email)) errors.email = "Enter a valid email address.";
-  if (password.length < 8) errors.password = "Password must be at least 8 characters.";
+  if (!validateEmail(email)) errors.email = "Vui lòng nhập địa chỉ email hợp lệ.";
+  if (password.length < 8) errors.password = "Mật khẩu cần có ít nhất 8 ký tự.";
   return { valid: Object.keys(errors).length === 0, errors };
 }
 
 export function validateRegistration(name: string, email: string, password: string, confirmPassword: string): AuthValidationResult {
   const errors: Record<string, string> = {};
-  if (name.trim().length < 2) errors.name = "Name must be at least 2 characters.";
-  if (!validateEmail(email)) errors.email = "Enter a valid email address.";
-  if (password.length < 10) errors.password = "Use at least 10 characters.";
-  if (!/[A-Z]/.test(password) || !/[0-9]/.test(password)) errors.password = "Use at least 10 characters with a number and uppercase letter.";
-  if (password !== confirmPassword) errors.confirmPassword = "Passwords do not match.";
+  if (name.trim().length < 2) errors.name = "Tên hiển thị cần có ít nhất 2 ký tự.";
+  if (!validateEmail(email)) errors.email = "Vui lòng nhập địa chỉ email hợp lệ.";
+  if (password.length < 10 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+    errors.password = "Mật khẩu cần có ít nhất 10 ký tự, gồm chữ hoa và số.";
+  }
+  if (password !== confirmPassword) errors.confirmPassword = "Mật khẩu xác nhận không khớp.";
   return { valid: Object.keys(errors).length === 0, errors };
 }
 
 export function validatePasswordReset(email: string): AuthValidationResult {
   const errors: Record<string, string> = {};
-  if (!validateEmail(email)) errors.email = "Enter the email linked to your account.";
+  if (!validateEmail(email)) errors.email = "Vui lòng nhập email gắn với tài khoản.";
   return { valid: Object.keys(errors).length === 0, errors };
 }
 

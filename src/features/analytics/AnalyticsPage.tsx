@@ -7,16 +7,16 @@ const COLORS = ["#4f46e5", "#8b5cf6", "#10b981", "#f59e0b", "#0ea5e9"];
 export function AnalyticsPage() {
   return (
     <>
-      <PageHeader eyebrow="Analytics" title="Learning progress" description="A scan-friendly view of consistency, mastery, and weak areas." />
+      <PageHeader eyebrow="Phân tích" title="Tiến độ học tập" description="Góc nhìn nhanh về độ đều đặn, mức thành thạo và các vùng còn yếu." />
       <section className="metric-row">
-        <MetricCard label="Minutes" value={`${analyticsSummary.weeklyMinutes}`} detail="This week" />
-        <MetricCard label="Accuracy" value={`${analyticsSummary.recallAccuracy}%`} detail="Recall quality" tone="ai" />
-        <MetricCard label="Streak" value={`${analyticsSummary.streak}`} detail="Daily capture" tone="success" />
-        <MetricCard label="Entries" value={`${analyticsSummary.entriesThisWeek}`} detail="This week" />
+        <MetricCard label="Số phút" value={`${analyticsSummary.weeklyMinutes}`} detail="Trong tuần này" />
+        <MetricCard label="Độ chính xác" value={`${analyticsSummary.recallAccuracy}%`} detail="Chất lượng ôn tập" tone="ai" />
+        <MetricCard label="Chuỗi học" value={`${analyticsSummary.streak}`} detail="Ngày ghi chép liên tục" tone="success" />
+        <MetricCard label="Nhật ký" value={`${analyticsSummary.entriesThisWeek}`} detail="Trong tuần này" />
       </section>
       <div className="analytics-grid" style={{ marginTop: 16 }}>
         <div className="stack">
-          <ChartCard title="Learning activity" detail="Minutes captured by day.">
+          <ChartCard title="Hoạt động học tập" detail="Số phút học theo từng ngày.">
             <div className="mini-chart">
               <ResponsiveContainer>
                 <AreaChart data={weeklyActivity}>
@@ -29,7 +29,7 @@ export function AnalyticsPage() {
               </ResponsiveContainer>
             </div>
           </ChartCard>
-          <ChartCard title="Topic distribution" detail="Where your learning time is concentrated.">
+          <ChartCard title="Phân bổ chủ đề" detail="Thời gian học đang tập trung vào đâu.">
             <div className="mini-chart">
               <ResponsiveContainer>
                 <PieChart>
@@ -43,7 +43,7 @@ export function AnalyticsPage() {
           </ChartCard>
         </div>
         <aside className="stack">
-          <ChartCard title="Mastery by topic">
+          <ChartCard title="Mức thành thạo theo chủ đề">
             <div className="mini-chart">
               <ResponsiveContainer>
                 <BarChart data={topics} layout="vertical" margin={{ left: 24 }}>
@@ -58,8 +58,8 @@ export function AnalyticsPage() {
           </ChartCard>
           <Card>
             <div className="section-heading">
-              <h2>Weak areas</h2>
-              <p>Prioritize these in the next recall session.</p>
+              <h2>Vùng kiến thức yếu</h2>
+              <p>Ưu tiên các chủ đề này trong phiên ôn tập tiếp theo.</p>
             </div>
             <div className="topic-list">
               {topics.filter((topic) => topic.mastery < 65).map((topic) => (

@@ -7,9 +7,9 @@ type Message = { role: "user" | "assistant"; text: string };
 
 export function AiCoachPage() {
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", text: "Bring me one concept you want to make explainable. I will turn it into a tighter mental model and a recall prompt." },
-    { role: "user", text: "I keep mixing up queue retries and idempotency." },
-    { role: "assistant", text: "Treat retries as the delivery mechanism and idempotency as the safety rule. A retry asks 'can we try again?' Idempotency asks 'what happens if we did this already?'" }
+    { role: "assistant", text: "Hãy đưa cho tôi một khái niệm bạn muốn giải thích rõ hơn. Tôi sẽ giúp bạn biến nó thành mô hình tư duy và câu hỏi ôn tập." },
+    { role: "user", text: "Mình hay nhầm giữa retry của queue và idempotency." },
+    { role: "assistant", text: "Hãy xem retry là cơ chế giao việc lại, còn idempotency là quy tắc an toàn. Retry hỏi: có thử lại được không? Idempotency hỏi: nếu thao tác này đã chạy rồi thì điều gì xảy ra?" }
   ]);
   const [draft, setDraft] = useState("");
 
@@ -18,14 +18,14 @@ export function AiCoachPage() {
     setMessages((current) => [
       ...current,
       { role: "user", text: draft },
-      { role: "assistant", text: "Good thread. Write one concrete failure case, then decide whether the fix belongs in retry policy, job identity, or side-effect guards." }
+      { role: "assistant", text: "Luồng suy nghĩ tốt. Hãy viết một failure case cụ thể, rồi xác định phần sửa nằm ở retry policy, định danh job hay cơ chế chặn side effect." }
     ]);
     setDraft("");
   }
 
   return (
     <>
-      <PageHeader eyebrow="AI Coach" title="Reason through your notes" description="A context-aware coach for turning loose understanding into durable explanations." />
+      <PageHeader eyebrow="Huấn luyện AI" title="Cùng phân tích ghi chú học tập" description="Trợ lý theo ngữ cảnh giúp biến hiểu biết rời rạc thành lời giải thích bền vững." />
       <div className="coach-grid">
         <Card>
           <div className="chat-thread" aria-live="polite">
@@ -34,25 +34,23 @@ export function AiCoachPage() {
             ))}
           </div>
           <div className="composer">
-            <Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => event.key === "Enter" && sendMessage()} placeholder="Ask for an explanation, analogy, or quiz prompt..." />
-            <Button onClick={sendMessage} icon={<Send size={17} />}>Send</Button>
+            <Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => event.key === "Enter" && sendMessage()} placeholder="Hỏi về cách giải thích, ví dụ tương tự hoặc câu hỏi ôn tập..." />
+            <Button onClick={sendMessage} icon={<Send size={17} />}>Gửi</Button>
           </div>
         </Card>
         <aside className="stack">
           <Card>
-            <div className="section-heading">
-              <h2>Suggested prompts</h2>
-            </div>
+            <div className="section-heading"><h2>Gợi ý câu hỏi</h2></div>
             <div className="stack">
-              {["Explain this like a design review", "Generate 3 recall questions", "Find the weak assumption"].map((prompt) => (
+              {["Giải thích như trong buổi review thiết kế", "Tạo 3 câu hỏi ôn tập", "Tìm giả định yếu nhất"].map((prompt) => (
                 <Button key={prompt} variant="ghost" onClick={() => setDraft(prompt)}>{prompt}</Button>
               ))}
             </div>
           </Card>
           <Card>
             <div className="section-heading">
-              <h2>Context</h2>
-              <p>Recent notes available to the coach.</p>
+              <h2>Ngữ cảnh</h2>
+              <p>Những ghi chú gần đây mà coach có thể tham chiếu.</p>
             </div>
             <div className="entry-list">
               {journalEntries.slice(0, 2).map((entry) => <div className="entry-item" key={entry.id}><div><h3>{entry.title}</h3><p>{entry.summary}</p></div></div>)}
