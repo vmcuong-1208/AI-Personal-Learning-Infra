@@ -1,6 +1,6 @@
 import { BarChart3, Bell, Bot, CircleHelp, Home, LogOut, Menu, PenLine, Search, Settings, Sparkles, Trophy, X } from "lucide-react";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { journalEntries } from "../../data/mock/mockData";
 import { useAuth } from "../../features/auth/AuthContext";
@@ -38,12 +38,6 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </NavLink>
         ))}
       </nav>
-      <div className="sidebar-card" onClick={onNavigate}>
-        <span className="mono-label">TRỌNG TÂM TUẦN</span>
-        <strong>Thiết kế hệ thống vững hơn</strong>
-        <p>Còn 3 phiên ôn tập trước thứ Sáu.</p>
-        <Button to="/journal/new" size="sm">Ghi nhật ký mới</Button>
-      </div>
     </>
   );
 }
@@ -54,10 +48,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [showLoginToast, setShowLoginToast] = useState(false);
   const [query, setQuery] = useState("");
+  const authMessage = (location.state as { authMessage?: string } | null)?.authMessage;
   const isJournalDetail = location.pathname.startsWith("/journal/") && location.pathname !== "/journal/new";
   const isJournalList = location.pathname === "/journal";
   const searchSuggestions = useMemo(() => filterEntries(journalEntries, query, "").slice(0, 4), [query]);
+
+  useEffect(() => {
+    if (!auth.isAuthenticated || !auth.user || !authMessage) return;
+    setShowLoginToast(true);
+    const timeout = window.setTimeout(() => setShowLoginToast(false), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [auth.isAuthenticated, auth.user, authMessage]);
 
   function closeMenus() {
     setIsNotificationsOpen(false);
@@ -125,6 +128,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <small>{auth.user.email}</small>
                 </span>
               </button>
+              {showLoginToast && (
+                <div className="auth-success-toast" role="status">
+                  <Sparkles size={16} />
+                  <span>{authMessage ?? `Đăng nhập thành công: ${auth.user.name}`}</span>
+                </div>
+              )}
               {isAccountOpen && (
                 <div className="dropdown-panel account-menu">
                   <Link to="/account/settings" onClick={closeMenus}><Settings size={16} /> Cài đặt tài khoản</Link>
