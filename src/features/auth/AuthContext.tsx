@@ -1,89 +1,79 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+﻿import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { AUTH_SESSION_KEY, GOOGLE_OAUTH_STATE_KEY, buildGoogleOAuthUrl, createSessionUser } from "./auth";
 import type { AuthUser } from "./auth";
+import {
+  confirmPasswordResetWithCognito,
+  confirmSignUpWithCognito,
+  getCurrentCognitoUser,
+  requestPasswordResetWithCognito,
+  signInWithCognito,
+  signOutFromCognito,
+  signUpWithCognito,
+  startGoogleHostedUiSignIn,
+  waitForCurrentCognitoUser
+} from "./cognitoAuth";
+
+type AuthActionResult = { ok: true; message: string } | { ok: false; message: string };
 
 type AuthContextValue = {
   user: AuthUser | null;
   isAuthenticated: boolean;
-  loginWithPassword: (email: string, password: string) => AuthUser;
-  registerWithPassword: (name: string, email: string, password: string) => AuthUser;
-  logout: () => void;
-  startGoogleLogin: () => { ok: true } | { ok: false; message: string };
-  completeGoogleLogin: (state: string | null) => { ok: true; message: string } | { ok: false; message: string };
+  isLoading: boolean;
+  refreshCurrentUser: () => Promise<AuthUser | null>;
+  completeGoogleLogin: () => Promise<AuthUser | null>;
+  loginWithPassword: (email: string, password: string) => Promise<AuthActionResult>;
+  registerWithPassword: (name: string, email: string, password: string) => Promise<AuthActionResult>;
+  confirmRegistration: (email: string, code: string) => Promise<AuthActionResult>;
+  requestPasswordReset: (email: string) => Promise<AuthActionResult>;
+  confirmPasswordReset: (email: string, code: string, newPassword: string) => Promise<AuthActionResult>;
+  logout: () => Promise<AuthActionResult>;
+  startGoogleLogin: () => Promise<AuthActionResult>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-function readSessionUser() {
-  try {
-    const raw = sessionStorage.getItem(AUTH_SESSION_KEY);
-    return raw ? (JSON.parse(raw) as AuthUser) : null;
-  } catch {
-    return null;
-  }
-}
-
-function persistSessionUser(user: AuthUser | null) {
-  if (user) {
-    sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(user));
-  } else {
-    sessionStorage.removeItem(AUTH_SESSION_KEY);
-  }
-}
-
-function randomState() {
-  const bytes = new Uint32Array(4);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (item) => item.toString(16)).join("");
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    setUser(readSessionUser());
+  const refreshCurrentUser = useCallback(async () => {
+    const currentUser = await getCurrentCognitoUser();
+    setUser(currentUser);
+    return currentUser;
   }, []);
 
-  const value = useMemo<AuthContextValue>(() => {
-    function commit(nextUser: AuthUser) {
-      setUser(nextUser);
-      persistSessionUser(nextUser);
-      return nextUser;
-    }
+  useEffect(() => {
+    refreshCurrentUser().finally(() => setIsLoading(false));
+  }, [refreshCurrentUser]);
 
+  const value = useMemo<AuthContextValue>(() => {
     return {
       user,
       isAuthenticated: Boolean(user),
-      loginWithPassword: (email) => commit(createSessionUser(email.split("@")[0] || "Người học", email, "password")),
-      registerWithPassword: (name, email) => commit(createSessionUser(name, email, "password")),
-      logout: () => {
-        setUser(null);
-        persistSessionUser(null);
+      isLoading,
+      refreshCurrentUser,
+      completeGoogleLogin: async () => {
+        const currentUser = await waitForCurrentCognitoUser();
+        setUser(currentUser);
+        return currentUser;
       },
-      startGoogleLogin: () => {
-        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
-        if (!clientId || clientId.includes("your-google-oauth-client-id")) {
-          return { ok: false, message: "Chưa cấu hình Google OAuth client ID. Hãy thêm VITE_GOOGLE_CLIENT_ID vào file .env." };
-        }
-
-        const state = randomState();
-        sessionStorage.setItem(GOOGLE_OAUTH_STATE_KEY, state);
-        const redirectUri = `${window.location.origin}/auth/google/callback`;
-        window.location.assign(buildGoogleOAuthUrl(clientId, redirectUri, state));
-        return { ok: true };
+      loginWithPassword: async (email, password) => {
+        const result = await signInWithCognito(email, password);
+        if (result.ok) setUser(result.user);
+        return { ok: result.ok, message: result.message };
       },
-      completeGoogleLogin: (state) => {
-        const expectedState = sessionStorage.getItem(GOOGLE_OAUTH_STATE_KEY);
-        sessionStorage.removeItem(GOOGLE_OAUTH_STATE_KEY);
-        if (!state || !expectedState || state !== expectedState) {
-          return { ok: false, message: "Không xác minh được trạng thái OAuth. Vui lòng thử lại." };
-        }
-
-        return { ok: true, message: "Đã nhận mã ủy quyền Google. Backend cần đổi mã, xác minh ID token và tạo phiên đăng nhập an toàn." };
-      }
+      registerWithPassword: (name, email, password) => signUpWithCognito(name, email, password),
+      confirmRegistration: (email, code) => confirmSignUpWithCognito(email, code),
+      requestPasswordReset: (email) => requestPasswordResetWithCognito(email),
+      confirmPasswordReset: (email, code, newPassword) => confirmPasswordResetWithCognito(email, code, newPassword),
+      logout: async () => {
+        const result = await signOutFromCognito();
+        if (result.ok) setUser(null);
+        return result;
+      },
+      startGoogleLogin: () => startGoogleHostedUiSignIn()
     };
-  }, [user]);
+  }, [isLoading, refreshCurrentUser, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

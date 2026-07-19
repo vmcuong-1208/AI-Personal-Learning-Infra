@@ -47,22 +47,24 @@ test("quiz flow works", async ({ page }) => {
   await expect(page.getByText(/Nhật ký tập trung/)).toBeVisible();
 });
 
-test("password login updates account state", async ({ page }) => {
+test("password login requires Cognito configuration", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: /Đăng nhập/ })).toBeVisible();
   await page.goto("/auth/login");
   await page.getByRole("button", { name: /^Đăng nhập$/ }).click();
-  await expect(page.getByText(/Đăng nhập thành công/)).toBeVisible();
-  await expect(page.getByLabel(/Menu tài khoản của learner/)).toBeVisible();
-  await page.getByLabel(/Menu tài khoản của learner/).click();
-  await expect(page.getByRole("link", { name: /Cài đặt tài khoản/ })).toBeVisible();
+  await expect(page.getByText(/Chưa cấu hình Cognito/)).toBeVisible();
 });
 
-test("forgot password validates and confirms reset request", async ({ page }) => {
+test("forgot password requires Cognito configuration", async ({ page }) => {
   await page.goto("/auth/forgot-password");
   await page.getByLabel("Email").fill("learner@example.com");
-  await page.getByRole("button", { name: /Gửi liên kết đặt lại/ }).click();
-  await expect(page.getByText("Đã yêu cầu liên kết đặt lại")).toBeVisible();
+  await page.getByRole("button", { name: /Gửi mã đặt lại/ }).click();
+  await expect(page.getByText(/Chưa cấu hình Cognito/)).toBeVisible();
+});
+
+test("google callback shows a clear error without an auth code", async ({ page }) => {
+  await page.goto("/auth/google/callback");
+  await expect(page.getByText(/Cognito không trả về mã ủy quyền/)).toBeVisible();
 });
 
 test("mobile hamburger opens and closes sidebar overlay", async ({ page, isMobile }) => {
