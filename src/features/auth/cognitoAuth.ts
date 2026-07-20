@@ -30,14 +30,40 @@ type AuthActionResult = {
 
 let configured = false;
 
+function isLocalDevOrigin(origin: string) {
+  try {
+    const { hostname } = new URL(origin);
+    return hostname === "localhost" || hostname === "127.0.0.1";
+  } catch {
+    return false;
+  }
+}
+
+function resolveSameOriginRedirect(configuredUrl: string | undefined, fallbackPath: string) {
+  const currentOrigin = window.location.origin;
+  const fallbackUrl = `${currentOrigin}${fallbackPath}`;
+  if (!configuredUrl) return fallbackUrl;
+
+  try {
+    const redirectUrl = new URL(configuredUrl);
+    if (isLocalDevOrigin(currentOrigin) && redirectUrl.origin !== currentOrigin) {
+      if (!fallbackPath && redirectUrl.pathname === "/" && !redirectUrl.search && !redirectUrl.hash) return currentOrigin;
+      return `${currentOrigin}${redirectUrl.pathname}${redirectUrl.search}${redirectUrl.hash}`;
+    }
+    return redirectUrl.toString();
+  } catch {
+    return fallbackUrl;
+  }
+}
+
 export function getCognitoConfig(): CognitoConfig {
   return {
     region: import.meta.env.VITE_AWS_REGION ?? "",
     userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID ?? "",
     userPoolClientId: import.meta.env.VITE_COGNITO_CLIENT_ID ?? "",
     domain: import.meta.env.VITE_COGNITO_DOMAIN ?? "",
-    redirectSignIn: import.meta.env.VITE_COGNITO_REDIRECT_SIGN_IN ?? `${window.location.origin}/auth/google/callback`,
-    redirectSignOut: import.meta.env.VITE_COGNITO_REDIRECT_SIGN_OUT ?? window.location.origin
+    redirectSignIn: resolveSameOriginRedirect(import.meta.env.VITE_COGNITO_REDIRECT_SIGN_IN, "/auth/google/callback"),
+    redirectSignOut: resolveSameOriginRedirect(import.meta.env.VITE_COGNITO_REDIRECT_SIGN_OUT, "")
   };
 }
 
@@ -299,5 +325,8 @@ export async function startGoogleHostedUiSignIn(): Promise<AuthActionResult> {
     return { ok: false, message: describeAuthError(error) };
   }
 }
+
+
+
 
 

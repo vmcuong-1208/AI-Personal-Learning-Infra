@@ -1,8 +1,9 @@
-import { Camera, CreditCard, Languages, LockKeyhole, Mail, MonitorSmartphone, Save, ShieldCheck, UserRound } from "lucide-react";
+import { Camera, CreditCard, Languages, LockKeyhole, Mail, MonitorSmartphone, RefreshCw, Save, ShieldCheck, UserRound } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Button, Card, Chip, Input, PageHeader } from "../../components/ui";
 import { useAuth } from "../auth/AuthContext";
+import { getBackendMe } from "./accountApi";
 
 type ProfileForm = {
   name: string;
@@ -13,6 +14,13 @@ type ProfileForm = {
 type SettingsMessage = {
   tone: "success" | "error" | "info";
   text: string;
+} | null;
+
+type BackendStatus = {
+  tone: "success" | "error" | "info";
+  text: string;
+  detail?: string;
+  fields?: Array<{ label: string; value: string }>;
 } | null;
 
 const text = {
@@ -65,7 +73,18 @@ const text = {
   upgrade: "N\u00e2ng c\u1ea5p",
   cancelPlan: "H\u1ee7y g\u00f3i",
   securityNote: "Ghi ch\u00fa b\u1ea3o m\u1eadt",
-  awsNote: "C\u00e1c thay \u0111\u1ed5i \u1edf trang n\u00e0y \u0111ang \u0111\u01b0\u1ee3c l\u01b0u c\u1ee5c b\u1ed9 tr\u00ean tr\u00ecnh duy\u1ec7t. Khi k\u1ebft n\u1ed1i AWS, t\u00ean hi\u1ec3n th\u1ecb v\u00e0 s\u1ed1 \u0111i\u1ec7n tho\u1ea1i n\u00ean l\u01b0u qua Cognito user attributes ho\u1eb7c API h\u1ed3 s\u01a1; \u1ea3nh \u0111\u1ea1i di\u1ec7n n\u00ean t\u1ea3i l\u00ean S3 b\u1eb1ng URL k\u00fd t\u1ea1m th\u1eddi; m\u1ecdi thay \u0111\u1ed5i n\u00ean c\u00f3 ki\u1ec3m tra quy\u1ec1n v\u00e0 audit log."
+  awsNote: "C\u00e1c thay \u0111\u1ed5i \u1edf trang n\u00e0y \u0111ang \u0111\u01b0\u1ee3c l\u01b0u c\u1ee5c b\u1ed9 tr\u00ean tr\u00ecnh duy\u1ec7t. Khi k\u1ebft n\u1ed1i AWS, t\u00ean hi\u1ec3n th\u1ecb v\u00e0 s\u1ed1 \u0111i\u1ec7n tho\u1ea1i n\u00ean l\u01b0u qua Cognito user attributes ho\u1eb7c API h\u1ed3 s\u01a1; \u1ea3nh \u0111\u1ea1i di\u1ec7n n\u00ean t\u1ea3i l\u00ean S3 b\u1eb1ng URL k\u00fd t\u1ea1m th\u1eddi; m\u1ecdi thay \u0111\u1ed5i n\u00ean c\u00f3 ki\u1ec3m tra quy\u1ec1n v\u00e0 audit log.",
+  backendConnection: "K\u1ebft n\u1ed1i backend",
+  backendDescription: "Ki\u1ec3m tra GET /me qua API Gateway v\u00e0 Cognito JWT Authorizer b\u1eb1ng access token hi\u1ec7n t\u1ea1i.",
+  testBackend: "Ki\u1ec3m tra /me",
+  testingBackend: "\u0110ang ki\u1ec3m tra...",
+  backendSuccess: "Backend \u0111\u00e3 x\u00e1c th\u1ef1c token v\u00e0 tr\u1ea3 v\u1ec1 th\u00f4ng tin ng\u01b0\u1eddi d\u00f9ng.",
+  backendNeedsLogin: "H\u00e3y \u0111\u0103ng nh\u1eadp tr\u01b0\u1edbc khi ki\u1ec3m tra route /me.",
+  backendFailed: "Ch\u01b0a g\u1ecdi \u0111\u01b0\u1ee3c /me qua backend.",
+  frontendEmail: "Email trong frontend",
+  backendEmail: "Email backend tr\u1ea3 v\u1ec1",
+  backendUserId: "User ID t\u1eeb token",
+  backendRaw: "D\u1eef li\u1ec7u backend"
 };
 
 function profileStorageKey(email: string) {
@@ -85,6 +104,30 @@ function getInitials(name: string) {
   return name.trim().slice(0, 1).toUpperCase() || "U";
 }
 
+
+function readStringValue(source: Record<string, unknown> | undefined, keys: string[]) {
+  if (!source) return undefined;
+
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "string" && value.trim()) return value;
+  }
+
+  return undefined;
+}
+
+function readBackendClaims(backendUser: Record<string, unknown>) {
+  const claims = backendUser.claims && typeof backendUser.claims === "object" && !Array.isArray(backendUser.claims)
+    ? backendUser.claims as Record<string, unknown>
+    : undefined;
+
+  return {
+    email: readStringValue(backendUser, ["email", "username"]) ?? readStringValue(claims, ["email", "username", "cognito:username"]),
+    userId: readStringValue(backendUser, ["userId", "sub", "principalId"]) ?? readStringValue(claims, ["sub", "userId", "principalId"])
+  };
+}
+
+
 export function AccountSettingsPage() {
   const auth = useAuth();
   const email = auth.user?.email ?? "";
@@ -98,6 +141,8 @@ export function AccountSettingsPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<SettingsMessage>(null);
+  const [backendStatus, setBackendStatus] = useState<BackendStatus>(null);
+  const [isTestingBackend, setIsTestingBackend] = useState(false);
 
   useEffect(() => {
     setForm({
@@ -107,6 +152,7 @@ export function AccountSettingsPage() {
     });
     setErrors({});
     setMessage(null);
+    setBackendStatus(null);
   }, [authName, savedProfile]);
 
   function updateForm(field: keyof ProfileForm, value: string) {
@@ -139,6 +185,38 @@ export function AccountSettingsPage() {
       setMessage({ tone: "info", text: text.imageReady });
     };
     reader.readAsDataURL(file);
+  }
+
+
+
+  async function testBackendConnection() {
+    if (!auth.isAuthenticated) {
+      setBackendStatus({ tone: "error", text: text.backendNeedsLogin });
+      return;
+    }
+
+    setIsTestingBackend(true);
+    setBackendStatus({ tone: "info", text: text.testingBackend });
+
+    try {
+      const backendUser = await getBackendMe();
+      const backendIdentity = readBackendClaims(backendUser);
+      const fields = [
+        email ? { label: text.frontendEmail, value: email } : undefined,
+        backendIdentity.email && backendIdentity.email !== email ? { label: text.backendEmail, value: backendIdentity.email } : undefined,
+        backendIdentity.userId ? { label: text.backendUserId, value: backendIdentity.userId } : undefined
+      ].filter((field): field is { label: string; value: string } => Boolean(field));
+
+      setBackendStatus({
+        tone: "success",
+        text: text.backendSuccess,
+        fields: fields.length > 0 ? fields : [{ label: text.backendRaw, value: JSON.stringify(backendUser) }]
+      });
+    } catch (error) {
+      setBackendStatus({ tone: "error", text: text.backendFailed, detail: error instanceof Error ? error.message : undefined });
+    } finally {
+      setIsTestingBackend(false);
+    }
   }
 
   function saveProfile(event: FormEvent) {
@@ -197,6 +275,34 @@ export function AccountSettingsPage() {
               <Button type="submit" icon={<Save size={16} />}>{text.save}</Button>
             </div>
           </form>
+        </Card>
+
+
+
+        <Card className="settings-card">
+          <div className="section-heading"><ShieldCheck size={19} /><h2>{text.backendConnection}</h2></div>
+          <p>{text.backendDescription}</p>
+          {backendStatus && (
+            <div className={`settings-message settings-message-${backendStatus.tone}`} role={backendStatus.tone === "error" ? "alert" : "status"}>
+              <strong>{backendStatus.text}</strong>
+              {backendStatus.fields && (
+                <dl className="settings-detail-list">
+                  {backendStatus.fields.map((field) => (
+                    <div key={field.label}>
+                      <dt>{field.label}</dt>
+                      <dd>{field.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+              {backendStatus.detail && <p>{backendStatus.detail}</p>}
+            </div>
+          )}
+          <div className="settings-save-row">
+            <Button type="button" variant="secondary" icon={<RefreshCw size={16} />} onClick={testBackendConnection} disabled={isTestingBackend}>
+              {isTestingBackend ? text.testingBackend : text.testBackend}
+            </Button>
+          </div>
         </Card>
 
         <Card className="settings-card">

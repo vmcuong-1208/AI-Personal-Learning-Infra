@@ -44,6 +44,18 @@ describe("cognito auth adapter", () => {
     fetchAuthSessionMock.mockResolvedValue({ tokens: { idToken: { payload: {} } } });
   });
 
+
+  it("uses the current local origin for OAuth redirects", async () => {
+    vi.stubEnv("VITE_COGNITO_REDIRECT_SIGN_IN", "http://localhost:5173/auth/google/callback");
+    vi.stubEnv("VITE_COGNITO_REDIRECT_SIGN_OUT", "http://localhost:5173");
+    const { getCognitoConfig } = await import("../../src/features/auth/cognitoAuth");
+
+    const config = getCognitoConfig();
+
+    expect(config.redirectSignIn).toBe(`${window.location.origin}/auth/google/callback`);
+    expect(config.redirectSignOut).toBe(window.location.origin);
+  });
+
   it("signs up users with email and display name attributes", async () => {
     const { signUpWithCognito } = await import("../../src/features/auth/cognitoAuth");
 
@@ -116,3 +128,4 @@ describe("cognito auth adapter", () => {
     expect(signOutMock).toHaveBeenCalled();
   });
 });
+

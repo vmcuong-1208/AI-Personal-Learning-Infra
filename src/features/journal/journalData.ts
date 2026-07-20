@@ -1,4 +1,14 @@
-import { journalEntries } from "../../data/mock/mockData";
+﻿import { journalEntries } from "../../data/mock/mockData";
+
+export type JournalImage = {
+  id: string;
+  imageKey: string;
+  fileName: string;
+  contentType: string;
+  size: number;
+  url?: string;
+  uploadedAt?: string;
+};
 
 export type LearningLog = {
   id: string;
@@ -14,6 +24,7 @@ export type LearningLog = {
   solutions: string;
   mood: "good" | "neutral" | "tired";
   difficulty: number;
+  images: JournalImage[];
 };
 
 export const LEARNING_LOGS_KEY = "learnflow.learning.logs";
@@ -26,13 +37,14 @@ const seededLogs: LearningLog[] = journalEntries.map((entry, index) => ({
   startTime: ["09:00", "13:30", "10:15", "15:00"][index],
   endTime: ["09:45", "14:02", "10:53", "15:29"][index],
   category: entry.topics.includes("Kubernetes") ? "monitoring" : entry.topics.includes("Terraform") ? "devops" : "programming",
-  tags: entry.topics.includes("Kubernetes") ? ["CloudWatch", "VPN", "IAM"] : entry.topics.includes("Terraform") ? ["AWS", "VPC"] : ["Redis", "Hàng đợi", "AI"],
+  tags: entry.topics.includes("Kubernetes") ? ["CloudWatch", "VPN", "IAM"] : entry.topics.includes("Terraform") ? ["AWS", "VPC"] : ["Redis", "Queue", "AI"],
   content: entry.content,
   commands: index === 0 ? "XADD learning:events * topic redis" : "",
-  errors: index === 3 ? "Thời gian readiness probe quá gắt nên rollout dễ bị nhiễu." : "",
-  solutions: index === 3 ? "Điều chỉnh chu kỳ probe theo thời gian khởi động thật của ứng dụng." : "",
+  errors: index === 3 ? "Readiness probe timeout was too strict and made rollout unstable." : "",
+  solutions: index === 3 ? "Adjusted probe timing to match the real application startup window." : "",
   mood: entry.mood === "stuck" ? "tired" : entry.mood === "confident" ? "good" : "neutral",
-  difficulty: index === 3 ? 4 : index === 2 ? 3 : 2
+  difficulty: index === 3 ? 4 : index === 2 ? 3 : 2,
+  images: []
 }));
 
 function readStoredLogs() {

@@ -1,8 +1,9 @@
-import { FileBarChart2, Filter, Plus, SearchX, SlidersHorizontal } from "lucide-react";
-import { useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+﻿import { FileBarChart2, Filter, Plus, SearchX, SlidersHorizontal } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button, Card, Chip, Input, PageHeader } from "../../components/ui";
-import { getLearningLogs } from "./journalData";
+import type { LearningLog } from "./journalData";
+import { getJournalLogs } from "./journalApi";
 
 const categories = ["all", "networking", "security", "monitoring", "devops", "ai", "programming"];
 const commonTags = ["AWS", "VPC", "NAT Gateway", "CloudWatch", "VPN", "IAM"];
@@ -17,8 +18,19 @@ const categoryLabels: Record<string, string> = {
 };
 const moodLabels: Record<string, string> = { good: "Tốt", neutral: "Bình thường", tired: "Mệt" };
 
+function toDateInputValue(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function daysAgo(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return toDateInputValue(date);
+}
+
 export function JournalListPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [range, setRange] = useState<"all" | "today" | "7" | "30">("30");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -28,12 +40,55 @@ export function JournalListPage() {
   const [tagInput, setTagInput] = useState("");
   const [difficulty, setDifficulty] = useState("all");
   const [page, setPage] = useState(1);
+  const [logs, setLogs] = useState<LearningLog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const pageSize = 6;
-  const logs = useMemo(() => getLearningLogs(), []);
-  const message = (location.state as { journalMessage?: string } | null)?.journalMessage;
+  const initialMessage = (location.state as { journalMessage?: string } | null)?.journalMessage ?? "";
+  const [flashMessage, setFlashMessage] = useState(initialMessage);
+  const [isFlashLeaving, setIsFlashLeaving] = useState(false);
+
+
+  useEffect(() => {
+    if (!flashMessage) return;
+
+    setIsFlashLeaving(false);
+    const fadeTimer = window.setTimeout(() => setIsFlashLeaving(true), 2600);
+    const clearTimer = window.setTimeout(() => {
+      setFlashMessage("");
+      setIsFlashLeaving(false);
+      navigate(location.pathname, { replace: true, state: null });
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(fadeTimer);
+      window.clearTimeout(clearTimer);
+    };
+  }, [flashMessage, location.pathname, navigate]);
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadLogs() {
+      setIsLoading(true);
+      setLoadError("");
+      try {
+        const nextLogs = await getJournalLogs();
+        if (!ignore) setLogs(nextLogs);
+      } catch (error) {
+        if (!ignore) setLoadError(error instanceof Error ? error.message : "Chưa tải được danh sách nhật ký.");
+      } finally {
+        if (!ignore) setIsLoading(false);
+      }
+    }
+
+    loadLogs();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const filteredLogs = useMemo(() => {
-    const start = range === "today" ? "2026-06-26" : range === "7" ? "2026-06-19" : range === "30" ? "2026-05-27" : "";
+    const start = range === "today" ? toDateInputValue(new Date()) : range === "7" ? daysAgo(7) : range === "30" ? daysAgo(30) : "";
     return logs.filter((log) => {
       const matchesRange = !start || log.date >= start;
       const matchesDates = (!dateFrom || log.date >= dateFrom) && (!dateTo || log.date <= dateTo);
@@ -69,7 +124,8 @@ export function JournalListPage() {
           </div>
         }
       />
-      {message && <div className="login-success" role="status">{message}</div>}
+      {flashMessage && <div className={`login-success${isFlashLeaving ? " is-leaving" : ""}`} role="status">{flashMessage}</div>}
+      {loadError && <div className="settings-message settings-message-error" role="alert">{loadError}</div>}
       <Card className="journal-filter-card">
         <div className="section-heading"><SlidersHorizontal size={18} /><h2>Bộ lọc</h2></div>
         <div className="quick-filter-row">
@@ -110,7 +166,12 @@ export function JournalListPage() {
         </div>
         {tags.length > 0 && <div className="page-actions">{tags.map((tag) => <button className="tag-removable" key={tag} onClick={() => { setTags((current) => current.filter((item) => item !== tag)); setPage(1); }}>{tag} ×</button>)}</div>}
       </Card>
-      {visibleLogs.length === 0 ? (
+      {isLoading ? (
+        <Card className="journal-empty">
+          <h2>Đang tải nhật ký...</h2>
+          <p>LearnFlow đang lấy dữ liệu mới nhất từ backend.</p>
+        </Card>
+      ) : visibleLogs.length === 0 ? (
         <Card className="journal-empty">
           <SearchX size={30} />
           <h2>Bạn chưa có nhật ký học nào.</h2>
@@ -123,10 +184,10 @@ export function JournalListPage() {
           <div className="journal-card-grid">
             {visibleLogs.map((log) => (
               <Card className={`journal-log-card${log.errors ? " has-errors" : ""}`} key={log.id}>
-                <div className="journal-log-meta"><span>{log.date}</span><span>{log.startTime ?? "--:--"} - {log.endTime ?? "--:--"}</span></div>
+                <div className="journal-log-meta"><span>{log.date}</span><span>{log.startTime || "--:--"} - {log.endTime || "--:--"}</span></div>
                 <div className="section-heading">
                   <h2>{log.title}</h2>
-                  <p>{categoryLabels[log.category] ?? log.category} · Tâm trạng: {moodLabels[log.mood]} · Độ khó: {log.difficulty}/5</p>
+                  <p>{categoryLabels[log.category] ?? log.category} · Tâm trạng: {moodLabels[log.mood] ?? log.mood} · Độ khó: {log.difficulty}/5</p>
                 </div>
                 <div className="page-actions">{log.tags.map((tag) => <Chip key={tag} tone={log.errors ? "ai" : "primary"}>{tag}</Chip>)}</div>
                 <p className="journal-log-preview">{log.content}</p>
@@ -150,3 +211,5 @@ export function JournalListPage() {
     </>
   );
 }
+
+
