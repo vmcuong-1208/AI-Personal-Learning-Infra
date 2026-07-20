@@ -1,4 +1,4 @@
-﻿import { Amplify } from "aws-amplify";
+import { Amplify } from "aws-amplify";
 import type { ResourcesConfig } from "aws-amplify";
 import {
   confirmResetPassword,
@@ -274,7 +274,7 @@ export async function signOutFromCognito(): Promise<AuthActionResult> {
   if (configError) return configError;
 
   try {
-    await signOut();
+    await signOut({ global: false });
     return { ok: true, message: "Đã đăng xuất." };
   } catch (error) {
     return { ok: false, message: describeAuthError(error) };

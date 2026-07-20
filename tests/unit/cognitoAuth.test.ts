@@ -1,4 +1,4 @@
-﻿import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const configureMock = vi.fn();
 const signUpMock = vi.fn();
@@ -125,7 +125,7 @@ describe("cognito auth adapter", () => {
     const result = await signOutFromCognito();
 
     expect(result.ok).toBe(true);
-    expect(signOutMock).toHaveBeenCalled();
+    expect(signOutMock).toHaveBeenCalledWith({ global: false });
   });
 });
 

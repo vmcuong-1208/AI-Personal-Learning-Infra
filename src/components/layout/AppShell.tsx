@@ -1,7 +1,7 @@
 import { BarChart3, Bell, Bot, CircleHelp, Home, LogOut, Menu, PenLine, Search, Settings, Sparkles, Trophy, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { journalEntries } from "../../data/mock/mockData";
 import { useAuth } from "../../features/auth/AuthContext";
 import { filterEntries } from "../../lib/search";
@@ -44,6 +44,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const auth = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -65,6 +66,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   function closeMenus() {
     setIsNotificationsOpen(false);
     setIsAccountOpen(false);
+  }
+
+  async function handleLogout() {
+    closeMenus();
+    await auth.logout();
+    navigate("/", { replace: true });
   }
 
   return (
@@ -138,7 +145,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <div className="dropdown-panel account-menu">
                   <Link to="/account/settings" onClick={closeMenus}><Settings size={16} /> Cài đặt tài khoản</Link>
                   <Link to="/help" onClick={closeMenus}><CircleHelp size={16} /> Trung tâm trợ giúp</Link>
-                  <button onClick={() => { auth.logout(); closeMenus(); }}><LogOut size={16} /> Đăng xuất</button>
+                  <button onClick={handleLogout}><LogOut size={16} /> Đăng xuất</button>
                 </div>
               )}
             </div>

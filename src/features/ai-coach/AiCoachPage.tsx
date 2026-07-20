@@ -1,60 +1,30 @@
-import { CalendarDays, FileText, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import { CalendarDays, FileText, RefreshCw, Sparkles } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card, Chip, Input, PageHeader } from "../../components/ui";
+import { ApiClientError } from "../../lib/apiClient";
+import { createAiReport, getAiReportById, getAiReports, type AiReport, type AiReportStatus, type AiReportType } from "./aiCoachApi";
 
-type ReportPeriod = "weekly" | "monthly";
-type JobStatus = "idle" | "pending" | "processing" | "completed" | "failed";
-type ReportStatus = "completed" | "failed";
+type ReportPeriod = AiReportType;
+type JobStatus = "idle" | AiReportStatus;
 
-type AiReport = {
-  id: string;
-  title: string;
-  range: string;
-  createdAt: string;
-  status: ReportStatus;
-  summary: string;
-  strengths: string[];
-  weaknesses: string[];
-  recommendations: string[];
-};
-
-const reports: AiReport[] = [
+const fallbackReports: AiReport[] = [
   {
-    id: "week-25-2026",
-    title: "Weekly AI Report - Week 25, 2026",
-    range: "2026-06-17 -> 2026-06-23",
-    createdAt: "2026-06-24 09:15",
+    id: "week-demo-2026",
+    title: "Weekly AI Report - Demo",
+    type: "weekly",
+    range: "17/06/2026 -> 23/06/2026",
+    startDate: "2026-06-17",
+    endDate: "2026-06-23",
+    createdAt: "2026-06-24T09:15:00.000Z",
     status: "completed",
     summary: "Tuần này bạn học đều hơn, ghi chú có nhiều ví dụ thực tế về queue, Redis và triển khai hệ thống. Các phần tốt nhất là khả năng liên hệ lỗi vận hành với cách thiết kế retry an toàn.",
     strengths: ["Ghi lại bối cảnh lỗi rõ ràng", "Biết so sánh nhiều phương án triển khai", "Có thói quen tóm tắt sau mỗi lab"],
-    weaknesses: ["Một số ghi chú command còn thiếu kết quả đầu ra", "Chưa phân biệt thật chắc readiness và liveness probe", "Ít câu hỏi tự kiểm tra sau buổi học"],
+    weaknesses: ["Một số ghi chú command còn thiếu kết quả đầu ra", "Chưa phân biệt thật chắc readiness và liveness probe"],
     recommendations: ["Thêm phần kết quả mong đợi cho từng command", "Ôn lại Kubernetes probes bằng 5 tình huống lỗi", "Tạo quiz ngắn ngay sau mỗi nhật ký quan trọng"]
-  },
-  {
-    id: "week-24-2026",
-    title: "Weekly AI Report - Week 24, 2026",
-    range: "2026-06-10 -> 2026-06-16",
-    createdAt: "2026-06-17 08:40",
-    status: "completed",
-    summary: "Bạn tập trung tốt vào nền tảng hạ tầng và bắt đầu gom các ghi chú rời rạc thành chủ đề lớn. Cần duy trì nhịp học đều và chuẩn hóa tag để tìm lại nhanh hơn.",
-    strengths: ["Chủ đề DevOps được ghi lại liên tục", "Có nhiều ví dụ lệnh thực hành", "Biết ghi lại nguyên nhân gốc của lỗi"],
-    weaknesses: ["Tag chưa nhất quán giữa các buổi học", "Một số mục chỉ có lệnh mà thiếu giải thích", "Chưa có mốc ưu tiên cho tuần sau"],
-    recommendations: ["Dùng bộ tag cố định cho AWS, Redis, Kubernetes", "Viết 2-3 dòng giải thích sau mỗi command", "Chọn một chủ đề khó nhất để coach phân tích sâu"]
-  },
-  {
-    id: "month-06-2026",
-    title: "Monthly AI Report - June 2026",
-    range: "2026-06-01 -> 2026-06-30",
-    createdAt: "2026-06-25 18:05",
-    status: "failed",
-    summary: "Yêu cầu báo cáo tháng chưa hoàn tất do dữ liệu đầu vào thiếu một số mốc thời gian. Bạn có thể tạo lại sau khi bổ sung nhật ký học.",
-    strengths: ["Có nhiều phiên học thực hành", "Các lỗi quan trọng đã được đánh dấu"],
-    weaknesses: ["Thiếu thời gian bắt đầu và kết thúc ở một số log", "Một vài entry chưa có danh mục"],
-    recommendations: ["Bổ sung metadata cho các entry còn thiếu", "Tạo lại báo cáo tháng sau khi cập nhật dữ liệu"]
   }
 ];
 
-const statusLabels: Record<JobStatus | ReportStatus, string> = {
+const statusLabels: Record<JobStatus, string> = {
   idle: "Chưa tạo yêu cầu",
   pending: "Đang chờ",
   processing: "Đang xử lý",
@@ -62,46 +32,181 @@ const statusLabels: Record<JobStatus | ReportStatus, string> = {
   failed: "Thất bại"
 };
 
+const POLL_INTERVAL_MS = 3000;
+const MAX_POLL_ATTEMPTS = 40;
+
+function toDateInputValue(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function startOfWeek(date: Date) {
+  const next = new Date(date);
+  const day = next.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  next.setDate(next.getDate() + diff);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+function endOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+}
+
+function parseWeekInput(value: string) {
+  const match = value.match(/^(\d{4})-W(\d{2})$/);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const week = Number(match[2]);
+  const firstThursday = new Date(Date.UTC(year, 0, 4));
+  const firstMonday = addDays(firstThursday, -(firstThursday.getUTCDay() || 7) + 1);
+  return addDays(firstMonday, (week - 1) * 7);
+}
+
+function resolveReportRange(period: ReportPeriod, quickRange: string, customDate: string) {
+  const now = new Date();
+
+  if (period === "weekly") {
+    const customStart = customDate ? parseWeekInput(customDate) : null;
+    const start = customStart ?? addDays(startOfWeek(now), quickRange === "last-week" ? -7 : 0);
+    return {
+      startDate: toDateInputValue(start),
+      endDate: toDateInputValue(addDays(start, 6))
+    };
+  }
+
+  const customMonth = customDate ? new Date(`${customDate}-01T00:00:00`) : null;
+  const baseMonth = customMonth && !Number.isNaN(customMonth.getTime())
+    ? customMonth
+    : new Date(now.getFullYear(), now.getMonth() + (quickRange === "last-month" ? -1 : 0), 1);
+
+  return {
+    startDate: toDateInputValue(baseMonth),
+    endDate: toDateInputValue(endOfMonth(baseMonth))
+  };
+}
+
+function formatDateTime(value: string) {
+  if (!value) return "Chưa có thời gian";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" });
+}
+
+function isFallbackAllowed(error: unknown) {
+  return error instanceof ApiClientError && (error.code === "CONFIG_ERROR" || error.code === "AUTH_REQUIRED" || error.code === "UNAUTHORIZED");
+}
+
 export function AiCoachPage() {
   const [period, setPeriod] = useState<ReportPeriod>("weekly");
   const [quickRange, setQuickRange] = useState("this-week");
   const [customDate, setCustomDate] = useState("");
   const [jobStatus, setJobStatus] = useState<JobStatus>("idle");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoadingReports, setIsLoadingReports] = useState(true);
   const [banner, setBanner] = useState("");
-  const [selectedReportId, setSelectedReportId] = useState(reports[0].id);
+  const [error, setError] = useState("");
+  const [reports, setReports] = useState<AiReport[]>(fallbackReports);
+  const [selectedReportId, setSelectedReportId] = useState(fallbackReports[0].id);
+  const pollTimerRef = useRef<number | null>(null);
 
   const selectedReport = useMemo(
     () => reports.find((report) => report.id === selectedReportId) ?? reports[0],
-    [selectedReportId]
+    [reports, selectedReportId]
   );
 
   const rangeOptions = period === "weekly"
     ? [
       { value: "this-week", label: "Tuần này" },
-      { value: "last-week", label: "Tuần trước" },
-      { value: "week-24-2026", label: "Tuần 24/2026" }
+      { value: "last-week", label: "Tuần trước" }
     ]
     : [
       { value: "this-month", label: "Tháng này" },
-      { value: "last-month", label: "Tháng trước" },
-      { value: "month-05-2026", label: "Tháng 05/2026" }
+      { value: "last-month", label: "Tháng trước" }
     ];
 
-  function generateReport() {
+  const refreshReports = useCallback(async () => {
+    setIsLoadingReports(true);
+    setError("");
+    try {
+      const nextReports = await getAiReports();
+      if (nextReports.length > 0) {
+        setReports(nextReports);
+        setSelectedReportId((current) => nextReports.some((report) => report.id === current) ? current : nextReports[0].id);
+      }
+    } catch (nextError) {
+      if (!isFallbackAllowed(nextError)) {
+        setError(nextError instanceof Error ? nextError.message : "Không tải được danh sách báo cáo AI.");
+      }
+    } finally {
+      setIsLoadingReports(false);
+    }
+  }, []);
+
+  const stopPolling = useCallback(() => {
+    if (pollTimerRef.current) {
+      window.clearTimeout(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+  }, []);
+
+  const pollReport = useCallback((reportId: string, attempt = 1) => {
+    stopPolling();
+    pollTimerRef.current = window.setTimeout(async () => {
+      try {
+        const nextReport = await getAiReportById(reportId);
+        setReports((current) => [nextReport, ...current.filter((report) => report.id !== nextReport.id)]);
+        setSelectedReportId(nextReport.id);
+        setJobStatus(nextReport.status);
+
+        if (nextReport.status === "completed" || nextReport.status === "failed" || attempt >= MAX_POLL_ATTEMPTS) {
+          setIsGenerating(false);
+          setBanner(nextReport.status === "completed" ? "Báo cáo AI đã hoàn thành." : "Báo cáo AI chưa hoàn tất. Hãy kiểm tra lại worker hoặc DLQ nếu trạng thái không đổi.");
+          return;
+        }
+
+        pollReport(reportId, attempt + 1);
+      } catch (nextError) {
+        setIsGenerating(false);
+        setJobStatus("failed");
+        setError(nextError instanceof Error ? nextError.message : "Không kiểm tra được trạng thái báo cáo.");
+      }
+    }, POLL_INTERVAL_MS);
+  }, [stopPolling]);
+
+  useEffect(() => {
+    refreshReports();
+    return stopPolling;
+  }, [refreshReports, stopPolling]);
+
+  async function generateReport() {
+    const range = resolveReportRange(period, quickRange, customDate);
     setIsGenerating(true);
     setJobStatus("pending");
-    setBanner("");
+    setBanner("Đã gửi yêu cầu tạo báo cáo AI. Worker đang xử lý qua SQS.");
+    setError("");
 
-    window.setTimeout(() => {
-      setJobStatus("processing");
-      setBanner("Yêu cầu báo cáo đã được tạo cho 2026-06-20 -> 2026-06-26. Quá trình này có thể mất vài giây.");
-    }, 650);
-
-    window.setTimeout(() => {
-      setJobStatus("completed");
+    try {
+      const createdReport = await createAiReport({ type: period, ...range });
+      setReports((current) => [createdReport, ...current.filter((report) => report.id !== createdReport.id)]);
+      setSelectedReportId(createdReport.id);
+      pollReport(createdReport.id);
+    } catch (nextError) {
+      if (isFallbackAllowed(nextError)) {
+        setIsGenerating(false);
+        setJobStatus("completed");
+        setBanner("Đang chạy dữ liệu demo vì frontend chưa có phiên đăng nhập/backend để gọi API thật.");
+        return;
+      }
       setIsGenerating(false);
-    }, 1400);
+      setJobStatus("failed");
+      setError(nextError instanceof Error ? nextError.message : "Không tạo được yêu cầu báo cáo AI.");
+    }
   }
 
   return (
@@ -110,9 +215,11 @@ export function AiCoachPage() {
         eyebrow="Huấn luyện AI"
         title="AI Learning Coach"
         description="Tóm tắt và đề xuất do AI tạo ra dựa trên nhật ký học tập của bạn."
+        action={<Button variant="ghost" onClick={refreshReports} icon={<RefreshCw size={17} />} disabled={isLoadingReports}>Làm mới</Button>}
       />
 
       {banner && <div className="coach-banner" role="status">{banner}</div>}
+      {error && <div className="form-error" role="alert">{error}</div>}
 
       <div className="coach-report-layout">
         <div className="coach-main-stack">
@@ -120,18 +227,18 @@ export function AiCoachPage() {
             <div className="section-heading">
               <span className="mono-label">Báo cáo</span>
               <h2>Generate AI Report</h2>
-              <p>Chọn chu kỳ và khoảng thời gian cần phân tích. Hệ thống sẽ tạo yêu cầu chạy nền và cập nhật trạng thái rõ ràng.</p>
+              <p>Chọn chu kỳ và khoảng thời gian cần phân tích. Frontend sẽ tạo job, nhận trạng thái pending và tự hỏi lại backend đến khi worker hoàn tất.</p>
             </div>
 
             <div className="report-controls">
               <fieldset className="segmented-field">
                 <legend>Chu kỳ báo cáo</legend>
                 <label>
-                  <input checked={period === "weekly"} name="period" type="radio" onChange={() => { setPeriod("weekly"); setQuickRange("this-week"); }} />
+                  <input checked={period === "weekly"} name="period" type="radio" onChange={() => { setPeriod("weekly"); setQuickRange("this-week"); setCustomDate(""); }} />
                   <span>Weekly</span>
                 </label>
                 <label>
-                  <input checked={period === "monthly"} name="period" type="radio" onChange={() => { setPeriod("monthly"); setQuickRange("this-month"); }} />
+                  <input checked={period === "monthly"} name="period" type="radio" onChange={() => { setPeriod("monthly"); setQuickRange("this-month"); setCustomDate(""); }} />
                   <span>Monthly</span>
                 </label>
               </fieldset>
@@ -172,13 +279,14 @@ export function AiCoachPage() {
             </div>
 
             <div className="report-list">
-              {reports.map((report) => (
+              {isLoadingReports && <p>Đang tải danh sách báo cáo...</p>}
+              {!isLoadingReports && reports.map((report) => (
                 <article className={`report-item ${selectedReportId === report.id ? "is-selected" : ""}`} key={report.id}>
                   <div className="report-item-icon"><FileText size={18} /></div>
                   <div>
                     <h3>{report.title}</h3>
                     <p><CalendarDays size={14} /> {report.range}</p>
-                    <p>Tạo lúc: {report.createdAt}</p>
+                    <p>Tạo lúc: {formatDateTime(report.createdAt)}</p>
                   </div>
                   <Chip tone={report.status === "completed" ? "success" : "neutral"}>{statusLabels[report.status]}</Chip>
                   <Button variant="ghost" size="sm" onClick={() => setSelectedReportId(report.id)}>Xem chi tiết</Button>
@@ -190,30 +298,36 @@ export function AiCoachPage() {
 
         <aside className="report-detail-panel">
           <Card>
-            <div className="section-heading">
-              <span className="mono-label">Chi tiết</span>
-              <h2>{selectedReport.title}</h2>
-              <p>{selectedReport.range}</p>
-            </div>
+            {selectedReport ? (
+              <>
+                <div className="section-heading">
+                  <span className="mono-label">Chi tiết</span>
+                  <h2>{selectedReport.title}</h2>
+                  <p>{selectedReport.range}</p>
+                </div>
 
-            <div className="report-detail-stack">
-              <section>
-                <h3>Tóm tắt</h3>
-                <p>{selectedReport.summary}</p>
-              </section>
-              <section>
-                <h3>Điểm mạnh</h3>
-                <ul>{selectedReport.strengths.map((item) => <li key={item}>{item}</li>)}</ul>
-              </section>
-              <section>
-                <h3>Điểm yếu</h3>
-                <ul>{selectedReport.weaknesses.map((item) => <li key={item}>{item}</li>)}</ul>
-              </section>
-              <section>
-                <h3>Đề xuất</h3>
-                <ul>{selectedReport.recommendations.map((item) => <li key={item}>{item}</li>)}</ul>
-              </section>
-            </div>
+                <div className="report-detail-stack">
+                  <section>
+                    <h3>Tóm tắt</h3>
+                    <p>{selectedReport.summary}</p>
+                  </section>
+                  <section>
+                    <h3>Điểm mạnh</h3>
+                    <ul>{(selectedReport.strengths.length ? selectedReport.strengths : ["Đang chờ AI Worker cập nhật kết quả."]).map((item) => <li key={item}>{item}</li>)}</ul>
+                  </section>
+                  <section>
+                    <h3>Điểm yếu</h3>
+                    <ul>{(selectedReport.weaknesses.length ? selectedReport.weaknesses : ["Chưa có dữ liệu."]).map((item) => <li key={item}>{item}</li>)}</ul>
+                  </section>
+                  <section>
+                    <h3>Đề xuất</h3>
+                    <ul>{(selectedReport.recommendations.length ? selectedReport.recommendations : ["Chưa có đề xuất."]).map((item) => <li key={item}>{item}</li>)}</ul>
+                  </section>
+                </div>
+              </>
+            ) : (
+              <p>Chưa có báo cáo nào.</p>
+            )}
           </Card>
         </aside>
       </div>
