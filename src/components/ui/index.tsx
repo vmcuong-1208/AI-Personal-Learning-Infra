@@ -64,11 +64,10 @@ export function MetricCard({ label, value, detail, tone = "primary" }: { label: 
   );
 }
 
-export function PageHeader({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description?: string; action?: ReactNode }) {
+export function PageHeader({ title, description, action }: { eyebrow?: string; title: string; description?: string; action?: ReactNode }) {
   return (
     <header className="page-header">
       <div>
-        {eyebrow && <span className="mono-label">{eyebrow}</span>}
         <h1>{title}</h1>
         {description && <p>{description}</p>}
       </div>

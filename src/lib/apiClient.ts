@@ -52,12 +52,15 @@ function buildApiUrl(path: string) {
   }
 
   if (/^https?:\/\//i.test(path)) return path;
-  return `${baseUrl}/${path.replace(/^\/+/, "")}`;
+  return `${baseUrl}/${path.replace(/^\/+/ , "")}`;
 }
 
-async function getAccessToken() {
+async function getAuthToken() {
   const session = await fetchAuthSession();
-  return session.tokens?.accessToken?.toString();
+  const idToken = session.tokens?.idToken?.toString();
+  const accessToken = session.tokens?.accessToken?.toString();
+  const preferredToken = import.meta.env.VITE_API_AUTH_TOKEN_TYPE === "access" ? accessToken : idToken;
+  return preferredToken || accessToken || idToken;
 }
 
 function getErrorCode(status: number): ApiErrorCode {
@@ -136,11 +139,11 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   const headers = new Headers(optionHeaders);
 
   if (!skipAuth) {
-    const accessToken = await getAccessToken();
-    if (!accessToken) {
+    const authToken = await getAuthToken();
+    if (!authToken) {
       throw new ApiClientError({ code: "AUTH_REQUIRED", message: getDefaultMessage("AUTH_REQUIRED"), status: 401 });
     }
-    headers.set("Authorization", `Bearer ${accessToken}`);
+    headers.set("Authorization", `Bearer ${authToken}`);
   }
 
   if (requestOptions.body && !(requestOptions.body instanceof FormData) && !headers.has("Content-Type")) {

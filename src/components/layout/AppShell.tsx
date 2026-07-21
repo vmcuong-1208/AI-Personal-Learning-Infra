@@ -23,11 +23,11 @@ function navClass({ isActive }: { isActive: boolean }) {
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
-      <NavLink to="/" className="brand-block" aria-label="Trang chủ LearnFlow" onClick={onNavigate}>
+      <NavLink to="/" className="brand-block" aria-label="Trang chủ AI Personal Learning" onClick={onNavigate}>
         <span className="brand-mark"><Sparkles size={20} /></span>
         <span>
-          <strong>LearnFlow</strong>
-          <small>Bảng điều khiển AI</small>
+          <strong>AI Personal Learning</strong>
+          <small>Không gian học tập cá nhân</small>
         </span>
       </NavLink>
       <nav className="sidebar-nav">
@@ -53,7 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [query, setQuery] = useState("");
   const authMessage = (location.state as { authMessage?: string } | null)?.authMessage;
   const isJournalDetail = location.pathname.startsWith("/journal/") && location.pathname !== "/journal/new";
-  const isJournalList = location.pathname === "/journal";
+  const isJournalList = false;
   const searchSuggestions = useMemo(() => filterEntries(journalEntries, query, "").slice(0, 4), [query]);
 
   useEffect(() => {
@@ -83,9 +83,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         <IconButton label="Mở menu điều hướng" onClick={() => setIsMobileMenuOpen(true)}>
           <Menu size={20} />
         </IconButton>
-        <NavLink to="/" className="navbar-brand" aria-label="Trang chủ LearnFlow" onClick={closeMenus}>
+        <NavLink to="/" className="navbar-brand" aria-label="Trang chủ AI Personal Learning" onClick={closeMenus}>
           <span className="brand-mark small"><Sparkles size={16} /></span>
-          <span>LearnFlow</span>
+          <span>AI Personal Learning</span>
         </NavLink>
         <div className="navbar-search">
           <Search size={18} aria-hidden="true" />

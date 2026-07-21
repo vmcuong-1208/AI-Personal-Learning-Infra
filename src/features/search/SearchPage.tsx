@@ -1,13 +1,14 @@
 import { CalendarDays, FileText, Pin, PinOff, Search, Sparkles } from "lucide-react";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Button, Card, Chip, Input, PageHeader } from "../../components/ui";
-import { getLearningLogs, type LearningLog } from "../journal/journalData";
+import { searchLearningLogs, type SearchResultItem } from "./searchApi";
 
-type RangePreset = "today" | "7" | "30" | "custom";
+type RangePreset = "all" | "today" | "7" | "30" | "custom";
 
 const rangeLabels: Record<RangePreset, string> = {
+  all: "Tất cả thời gian",
   today: "Hôm nay",
   "7": "7 ngày trước",
   "30": "30 ngày trước",
@@ -16,7 +17,6 @@ const rangeLabels: Record<RangePreset, string> = {
 
 const topicOptions = ["Networking", "Security", "Monitoring", "DevOps", "AI", "Programming"];
 const commonTags = ["AWS", "VPC", "NAT Gateway", "CloudWatch", "IAM", "VPN"];
-const searchSuggestions = ["NAT Gateway", "CloudWatch Alarms", "VPN", "IAM role error"];
 const topicLabels: Record<string, string> = {
   networking: "Networking",
   security: "Security",
@@ -30,45 +30,22 @@ function normalize(value: string) {
   return value.trim().toLowerCase();
 }
 
+function toDateInputValue(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
 function getRangeStart(range: RangePreset) {
-  if (range === "today") return "2026-06-26";
-  if (range === "7") return "2026-06-19";
-  if (range === "30") return "2026-05-27";
+  const date = new Date();
+  if (range === "today") return toDateInputValue(date);
+  if (range === "7") {
+    date.setDate(date.getDate() - 7);
+    return toDateInputValue(date);
+  }
+  if (range === "30") {
+    date.setDate(date.getDate() - 30);
+    return toDateInputValue(date);
+  }
   return "";
-}
-
-function buildSearchUrl(query: string, from: string, to: string, tags: string[]) {
-  const params = new URLSearchParams();
-  if (query) params.set("query", query);
-  if (from) params.set("from", from);
-  if (to) params.set("to", to);
-  if (tags.length > 0) params.set("tags", tags.join(","));
-  return `/search?${params.toString()}`;
-}
-
-function getLogHaystack(log: LearningLog) {
-  return [
-    log.title,
-    log.category,
-    log.tags.join(" "),
-    log.content,
-    log.commands,
-    log.errors,
-    log.solutions
-  ].join(" ");
-}
-
-function makeSnippet(log: LearningLog, query: string) {
-  const source = log.errors || log.content || log.commands || log.solutions;
-  const cleanSource = source.replace(/\s+/g, " ").trim();
-  if (!query) return cleanSource.slice(0, 180);
-
-  const index = normalize(cleanSource).indexOf(normalize(query));
-  if (index < 0) return cleanSource.slice(0, 180);
-
-  const start = Math.max(0, index - 60);
-  const end = Math.min(cleanSource.length, index + query.length + 110);
-  return `${start > 0 ? "..." : ""}${cleanSource.slice(start, end)}${end < cleanSource.length ? "..." : ""}`;
 }
 
 function HighlightedSnippet({ snippet, query }: { snippet: string; query: string }) {
@@ -85,18 +62,17 @@ function HighlightedSnippet({ snippet, query }: { snippet: string; query: string
   );
 }
 
-function groupResultsByDate(results: LearningLog[]) {
-  return results.reduce<Record<string, LearningLog[]>>((groups, log) => {
+function groupResultsByDate(results: SearchResultItem[]) {
+  return results.reduce<Record<string, SearchResultItem[]>>((groups, log) => {
     groups[log.date] = [...(groups[log.date] ?? []), log];
     return groups;
   }, {});
 }
 
 export function SearchPage() {
-  const logs = useMemo(() => getLearningLogs(), []);
   const [draftQuery, setDraftQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
-  const [range, setRange] = useState<RangePreset>("30");
+  const [range, setRange] = useState<RangePreset>("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [topic, setTopic] = useState("");
@@ -105,29 +81,50 @@ export function SearchPage() {
   const [tagInput, setTagInput] = useState("");
   const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [results, setResults] = useState<SearchResultItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
   const hasSearched = submittedQuery.trim().length > 0 || tags.length > 0 || Boolean(topic || customTopic || dateFrom || dateTo);
 
   const searchFrom = range === "custom" ? dateFrom : getRangeStart(range);
   const searchTo = range === "custom" ? dateTo : "";
-  const apiPreview = buildSearchUrl(submittedQuery, searchFrom, searchTo, tags);
+  const selectedTopic = topic === "custom" ? customTopic : topic;
+  useEffect(() => {
+    if (!hasSearched) {
+      setResults([]);
+      setSearchError("");
+      return;
+    }
 
-  const results = useMemo(() => {
-    if (!hasSearched) return [];
+    let ignore = false;
 
-    const query = normalize(submittedQuery);
-    const selectedTopic = normalize(topic === "custom" ? customTopic : topic);
+    async function runSearch() {
+      setIsSearching(true);
+      setSearchError("");
+      try {
+        const nextResults = await searchLearningLogs({
+          q: submittedQuery,
+          topic: selectedTopic,
+          from: searchFrom,
+          to: searchTo,
+          tags
+        });
+        if (!ignore) setResults(nextResults);
+      } catch (error) {
+        if (!ignore) {
+          setResults([]);
+          setSearchError(error instanceof Error ? error.message : "Chưa tìm kiếm được nhật ký.");
+        }
+      } finally {
+        if (!ignore) setIsSearching(false);
+      }
+    }
 
-    return logs
-      .filter((log) => {
-        const haystack = normalize(getLogHaystack(log));
-        const matchesQuery = !query || haystack.includes(query);
-        const matchesRange = (!searchFrom || log.date >= searchFrom) && (!searchTo || log.date <= searchTo);
-        const matchesTopic = !selectedTopic || normalize(log.category) === selectedTopic || log.tags.some((tag) => normalize(tag) === selectedTopic);
-        const matchesTags = tags.length === 0 || tags.every((tag) => log.tags.some((item) => normalize(item) === normalize(tag)));
-        return matchesQuery && matchesRange && matchesTopic && matchesTags;
-      })
-      .sort((a, b) => `${b.date}${b.startTime ?? ""}`.localeCompare(`${a.date}${a.startTime ?? ""}`));
-  }, [customTopic, hasSearched, logs, searchFrom, searchTo, submittedQuery, tags, topic]);
+    runSearch();
+    return () => {
+      ignore = true;
+    };
+  }, [hasSearched, searchFrom, searchTo, selectedTopic, submittedQuery, tags]);
 
   const groupedResults = useMemo(() => groupResultsByDate(results), [results]);
   const selected = results.find((item) => item.id === selectedId) ?? results[0];
@@ -147,6 +144,11 @@ export function SearchPage() {
     setSelectedId(null);
   }
 
+  function removeTag(tag: string) {
+    setTags((current) => current.filter((item) => item !== tag));
+    setSelectedId(null);
+  }
+
   function toggleFavorite(id: string) {
     setFavorites((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   }
@@ -156,7 +158,7 @@ export function SearchPage() {
       <PageHeader
         eyebrow="Tìm kiếm"
         title="Tìm kiếm nhật ký học"
-        description="Tìm lại learning logs theo từ khóa, tag, chủ đề và khoảng thời gian để mở chi tiết, ôn quiz hoặc tạo báo cáo AI."
+        description="Tìm lại ghi chú theo từ khóa, chủ đề, thẻ hoặc khoảng thời gian để ôn lại nhanh hơn."
       />
 
       <Card className="search-console">
@@ -168,19 +170,13 @@ export function SearchPage() {
             onChange={(event) => setDraftQuery(event.target.value)}
             placeholder="Tìm kiếm theo chủ đề, lỗi, lệnh hoặc ghi chú..."
           />
-          <Button type="submit" icon={<Search size={17} />}>Search</Button>
+          <Button type="submit" icon={<Search size={17} />} disabled={isSearching}>{isSearching ? "Đang tìm..." : "Search"}</Button>
         </form>
 
-        <div className="search-suggestion-row" aria-label="Gợi ý tìm kiếm">
-          {searchSuggestions.map((suggestion) => (
-            <button key={suggestion} type="button" onClick={() => { setDraftQuery(suggestion); setSubmittedQuery(suggestion); setSelectedId(null); }}>{suggestion}</button>
-          ))}
-        </div>
-
-        <div className="search-filter-grid">
+        <div className="search-filter-grid user-search-filter-grid">
           <div className="form-field">
             <label htmlFor="search-range">Khoảng thời gian</label>
-            <select id="search-range" className="input" value={range} onChange={(event) => setRange(event.target.value as RangePreset)}>
+            <select id="search-range" className="input" value={range} onChange={(event) => { setRange(event.target.value as RangePreset); setSelectedId(null); }}>
               {(Object.keys(rangeLabels) as RangePreset[]).map((item) => <option key={item} value={item}>{rangeLabels[item]}</option>)}
             </select>
           </div>
@@ -189,18 +185,18 @@ export function SearchPage() {
             <>
               <div className="form-field">
                 <label htmlFor="search-from">Từ ngày</label>
-                <Input id="search-from" type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
+                <Input id="search-from" type="date" value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); setSelectedId(null); }} />
               </div>
               <div className="form-field">
                 <label htmlFor="search-to">Đến ngày</label>
-                <Input id="search-to" type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
+                <Input id="search-to" type="date" value={dateTo} onChange={(event) => { setDateTo(event.target.value); setSelectedId(null); }} />
               </div>
             </>
           )}
 
           <div className="form-field">
             <label htmlFor="search-topic">Chủ đề / danh mục</label>
-            <select id="search-topic" className="input" value={topic} onChange={(event) => setTopic(event.target.value)}>
+            <select id="search-topic" className="input" value={topic} onChange={(event) => { setTopic(event.target.value); setSelectedId(null); }}>
               <option value="">Tất cả chủ đề</option>
               {topicOptions.map((item) => <option key={item} value={item.toLowerCase()}>{item}</option>)}
               <option value="custom">Nhập chủ đề khác</option>
@@ -210,7 +206,7 @@ export function SearchPage() {
           {topic === "custom" && (
             <div className="form-field">
               <label htmlFor="search-custom-topic">Chủ đề tự nhập</label>
-              <Input id="search-custom-topic" value={customTopic} onChange={(event) => setCustomTopic(event.target.value)} placeholder="Ví dụ: serverless" />
+              <Input id="search-custom-topic" value={customTopic} onChange={(event) => { setCustomTopic(event.target.value); setSelectedId(null); }} placeholder="Ví dụ: serverless" />
             </div>
           )}
 
@@ -243,15 +239,12 @@ export function SearchPage() {
 
         {tags.length > 0 && (
           <div className="page-actions">
-            {tags.map((tag) => <button className="tag-removable" key={tag} type="button" onClick={() => setTags((current) => current.filter((item) => item !== tag))}>{tag} x</button>)}
+            {tags.map((tag) => <button className="tag-removable" key={tag} type="button" onClick={() => removeTag(tag)}>{tag} x</button>)}
           </div>
         )}
-
-        <div className="api-preview">
-          <span>API request</span>
-          <code>GET {apiPreview}</code>
-        </div>
       </Card>
+
+      {searchError && <div className="settings-message settings-message-error" role="alert">{searchError}</div>}
 
       {pinnedResults.length > 0 && (
         <Card className="favorites-strip">
@@ -278,14 +271,14 @@ export function SearchPage() {
           {!hasSearched && (
             <div className="search-empty">
               <Search size={30} />
-              <p>Nhập từ khóa để tìm trong nhật ký học của bạn.</p>
+              <p>Nhập từ khóa, tag hoặc chủ đề để tìm trong nhật ký học của bạn.</p>
             </div>
           )}
 
           {hasSearched && results.length === 0 && (
             <div className="search-empty">
               <FileText size={30} />
-              <p>Không tìm thấy nhật ký phù hợp. Thử đổi từ khóa hoặc khoảng thời gian.</p>
+              <p>{isSearching ? "Đang tìm kiếm trong nhật ký..." : "Không tìm thấy ghi chú phù hợp. Thử đổi từ khóa hoặc khoảng thời gian."}</p>
             </div>
           )}
 
@@ -300,14 +293,14 @@ export function SearchPage() {
                         <button className="search-log-main" type="button" onClick={() => setSelectedId(log.id)}>
                           <div className="journal-log-meta">
                             <span>{log.date}</span>
-                            <span>{log.startTime ?? "--:--"} - {log.endTime ?? "--:--"}</span>
+                            <span>{log.topic}</span>
                           </div>
                           <h4>{log.title}</h4>
                           <div className="page-actions">
-                            <Chip tone="primary">{topicLabels[log.category] ?? log.category}</Chip>
+                            <Chip tone="primary">{topicLabels[normalize(log.topic)] ?? log.topic}</Chip>
                             {log.tags.map((tag) => <Chip key={tag}>{tag}</Chip>)}
                           </div>
-                          <p className="search-snippet"><HighlightedSnippet snippet={makeSnippet(log, submittedQuery)} query={submittedQuery} /></p>
+                          <p className="search-snippet"><HighlightedSnippet snippet={log.snippet} query={submittedQuery} /></p>
                         </button>
                         <div className="search-log-actions">
                           <IconPinButton active={favorites.includes(log.id)} onClick={() => toggleFavorite(log.id)} />
@@ -328,12 +321,10 @@ export function SearchPage() {
               <div className="section-heading">
                 <span className="mono-label">Chi tiết nhanh</span>
                 <h2>{selected.title}</h2>
-                <p><CalendarDays size={14} /> {selected.date} · {selected.startTime ?? "--:--"} - {selected.endTime ?? "--:--"}</p>
+                <p><CalendarDays size={14} /> {selected.date} - {selected.topic}</p>
               </div>
               <div className="page-actions">{selected.tags.map((tag) => <Chip key={tag} tone="ai">{tag}</Chip>)}</div>
-              <p className="article-body">{selected.content}</p>
-              {selected.commands && <pre className="detail-code">{selected.commands}</pre>}
-              {selected.errors && <div className="error-highlight">Lỗi gặp phải: {selected.errors}</div>}
+              <p className="article-body">{selected.snippet || "Chưa có đoạn xem nhanh cho kết quả này."}</p>
               <div className="search-quick-actions">
                 <Button to={`/journal/${selected.id}`} variant="primary">Xem chi tiết</Button>
                 <Button to={`/journal/${selected.id}/edit`} variant="ghost">Mở lại lab</Button>

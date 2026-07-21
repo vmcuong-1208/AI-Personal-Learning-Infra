@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock3, History, RefreshCw, Sparkles, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Card, Chip, PageHeader, ProgressBar } from "../../components/ui";
+import { Button, Card, Chip, Input, PageHeader, ProgressBar } from "../../components/ui";
 import { ApiClientError } from "../../lib/apiClient";
 import { createQuiz, getQuizById, submitQuizAttempt, type PracticeQuestion, type Quiz, type QuizDifficulty, type QuizSource, type QuizStatus } from "./quizApi";
 
@@ -20,7 +20,7 @@ const sourceLabels: Record<QuizSource, string> = {
   topic: "Chủ đề cụ thể"
 };
 
-const topicOptions = ["Networking", "Security", "Monitoring", "DevOps", "AI", "Programming"];
+const topicOptions = ["AWS", "VPC", "IAM", "CloudWatch", "Networking", "Security", "Monitoring", "DevOps", "AI", "Programming"];
 const POLL_INTERVAL_MS = 3000;
 const MAX_POLL_ATTEMPTS = 40;
 
@@ -150,10 +150,14 @@ function getStatusLabel(status: QuizStatus) {
 }
 
 export function QuizPage() {
-  const [source, setSource] = useState<QuizSource>("week");
+  const [sourceMode, setSourceMode] = useState<"time" | "topic">("time");
+  const [cycle, setCycle] = useState<"day" | "week" | "month">("week");
+  const [sourceDate, setSourceDate] = useState("");
+  const [topicFrom, setTopicFrom] = useState("");
+  const [topicTo, setTopicTo] = useState("");
   const [questionCount, setQuestionCount] = useState(5);
   const [difficulty, setDifficulty] = useState<QuizDifficulty>("Medium");
-  const [topic, setTopic] = useState("Networking");
+  const [topic, setTopic] = useState("AWS");
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [submitted, setSubmitted] = useState(false);
   const [started, setStarted] = useState(false);
@@ -170,6 +174,7 @@ export function QuizPage() {
   const [error, setError] = useState("");
   const pollTimerRef = useRef<number | null>(null);
 
+  const source: QuizSource = sourceMode === "topic" ? "topic" : cycle === "month" ? "month" : "week";
   const selectedHistory = historyItems.find((item) => item.id === selectedHistoryId) ?? historyItems[0];
   const questions = activeQuiz?.questions ?? buildQuizQuestions(questionCount);
   const currentQuestion = questions[currentIndex] ?? questions[0];
@@ -229,7 +234,7 @@ export function QuizPage() {
 
         if (nextQuiz.status === "failed" || attempt >= MAX_POLL_ATTEMPTS) {
           setIsGenerating(false);
-          setError("Quiz chưa hoàn tất. Hãy kiểm tra Lambda AI Worker, SQS DLQ hoặc log Bedrock.");
+          setError("Quiz chưa sẵn sàng. Vui lòng thử lại sau ít phút.");
           return;
         }
 
@@ -260,7 +265,7 @@ export function QuizPage() {
   async function generateQuiz() {
     setIsGenerating(true);
     setQuizStatus("pending");
-    setBanner("Đã gửi yêu cầu tạo Quiz AI. Worker đang xử lý qua SQS.");
+    setBanner("Đang tạo bài ôn tập từ nhật ký của bạn.");
     setError("");
 
     try {
@@ -281,7 +286,7 @@ export function QuizPage() {
       if (isFallbackAllowed(nextError)) {
         const demoQuiz = buildFallbackQuiz(source, topic, questionCount, difficulty);
         setIsGenerating(false);
-        setBanner("Đang chạy quiz demo vì frontend chưa có phiên đăng nhập/backend để gọi API thật.");
+        setBanner("Đang mở quiz mẫu vì chưa có đủ dữ liệu cá nhân để tạo quiz mới.");
         upsertHistory(demoQuiz, "Completed");
         startQuiz(demoQuiz);
         return;
@@ -346,7 +351,7 @@ export function QuizPage() {
         <PageHeader
           eyebrow="AI practice room"
           title="Ôn tập / Quiz AI"
-          description="AI sẽ tạo câu hỏi ôn tập dựa trên nhật ký học của bạn. Chọn phạm vi và chủ đề để bắt đầu."
+          description="Tạo câu hỏi ôn tập từ nhật ký theo khoảng thời gian hoặc theo chủ đề bạn muốn luyện lại."
         />
 
         {banner && <div className="coach-banner" role="status">{banner}</div>}
@@ -355,28 +360,55 @@ export function QuizPage() {
         <div className="quiz-setup-layout">
           <Card className="quiz-generator-card">
             <div className="section-heading">
-              <span className="mono-label">Tạo bài ôn tập</span>
-              <h2>Generate Quiz</h2>
-              <p>Frontend sẽ gửi job tạo quiz, nhận trạng thái pending và tự polling đến khi AI Worker cập nhật câu hỏi vào DynamoDB.</p>
+              
+              <h2>Tạo quiz ôn tập</h2>
+              <p>Chọn nguồn ghi chú, số câu và độ khó để bắt đầu.</p>
             </div>
 
             <div className="quiz-generator-stack">
               <fieldset className="segmented-field quiz-source-row">
                 <legend>Nguồn dữ liệu</legend>
-                {(Object.keys(sourceLabels) as QuizSource[]).map((item) => (
-                  <label key={item}>
-                    <input checked={source === item} name="quiz-source" type="radio" onChange={() => setSource(item)} />
-                    <span>{sourceLabels[item]}</span>
-                  </label>
-                ))}
+                <label>
+                  <input checked={sourceMode === "time"} name="quiz-source-mode" type="radio" onChange={() => setSourceMode("time")} />
+                  <span>Theo khoảng thời gian</span>
+                </label>
+                <label>
+                  <input checked={sourceMode === "topic"} name="quiz-source-mode" type="radio" onChange={() => setSourceMode("topic")} />
+                  <span>Theo chủ đề</span>
+                </label>
               </fieldset>
 
-              {source === "topic" && (
-                <div className="form-field">
-                  <label htmlFor="quiz-topic">Chủ đề</label>
-                  <select id="quiz-topic" className="input" value={topic} onChange={(event) => setTopic(event.target.value)}>
-                    {topicOptions.map((item) => <option key={item} value={item}>{item}</option>)}
-                  </select>
+              {sourceMode === "time" ? (
+                <div className="quiz-source-grid">
+                  <div className="form-field">
+                    <label htmlFor="quiz-cycle">Kiểu chu kỳ</label>
+                    <select id="quiz-cycle" className="input" value={cycle} onChange={(event) => setCycle(event.target.value as typeof cycle)}>
+                      <option value="day">Ngày</option>
+                      <option value="week">Tuần</option>
+                      <option value="month">Tháng</option>
+                    </select>
+                  </div>
+                  <div className="form-field">
+                    <label htmlFor="quiz-source-date">Chọn mốc thời gian</label>
+                    <Input id="quiz-source-date" type={cycle === "month" ? "month" : cycle === "week" ? "week" : "date"} value={sourceDate} onChange={(event) => setSourceDate(event.target.value)} />
+                  </div>
+                </div>
+              ) : (
+                <div className="quiz-source-grid">
+                  <div className="form-field">
+                    <label htmlFor="quiz-topic">Chủ đề / thẻ</label>
+                    <select id="quiz-topic" className="input" value={topic} onChange={(event) => setTopic(event.target.value)}>
+                      {topicOptions.map((item) => <option key={item} value={item}>{item}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-field">
+                    <label htmlFor="quiz-topic-from">Từ ngày</label>
+                    <Input id="quiz-topic-from" type="date" value={topicFrom} onChange={(event) => setTopicFrom(event.target.value)} />
+                  </div>
+                  <div className="form-field">
+                    <label htmlFor="quiz-topic-to">Đến ngày</label>
+                    <Input id="quiz-topic-to" type="date" value={topicTo} onChange={(event) => setTopicTo(event.target.value)} />
+                  </div>
                 </div>
               )}
 
@@ -397,7 +429,7 @@ export function QuizPage() {
 
             <div className="generate-actions">
               <Button onClick={generateQuiz} icon={<Sparkles size={17} />} disabled={isGenerating}>{isGenerating ? "Đang tạo Quiz..." : "Tạo Quiz"}</Button>
-              {isGenerating && <p>Trạng thái job: {getStatusLabel(quizStatus)}. Vui lòng chờ AI Worker sinh câu hỏi.</p>}
+              {isGenerating && <p>Quiz đang được chuẩn bị. Bạn có thể chờ trong giây lát.</p>}
             </div>
           </Card>
 
@@ -419,7 +451,7 @@ export function QuizPage() {
               ))}
             </div>
             <div className="quiz-history-detail">
-              <span className="mono-label">Chi tiết</span>
+              
               <h3>{selectedHistory.title}</h3>
               <p>Độ khó: {selectedHistory.difficulty}. Trạng thái: {selectedHistory.status}.</p>
               <Button variant="ghost" size="sm" icon={<RefreshCw size={15} />} onClick={() => activeQuiz && pollQuiz(activeQuiz.id)} disabled={!activeQuiz || isGenerating}>Kiểm tra lại</Button>

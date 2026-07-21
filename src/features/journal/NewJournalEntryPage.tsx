@@ -1,4 +1,4 @@
-﻿import { ImagePlus, RotateCcw, Save, X } from "lucide-react";
+import { ImagePlus, RotateCcw, Save, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AiPanel, Button, Card, Input, PageHeader, ProgressBar, Textarea } from "../../components/ui";
@@ -20,6 +20,7 @@ type LogForm = {
   startTime: string;
   endTime: string;
   category: string;
+  customCategory: string;
   tags: string[];
   tagInput: string;
   content: string;
@@ -44,6 +45,7 @@ function createEmptyForm(): LogForm {
     startTime: "",
     endTime: "",
     category: "devops",
+    customCategory: "",
     tags: [],
     tagInput: "",
     content: "",
@@ -70,8 +72,8 @@ function formFromLog(log: LearningLog): LogForm {
     title: log.title,
     date: log.date || todayInputValue(),
     startTime: log.startTime ?? "",
-    endTime: log.endTime ?? "",
-    category: log.category,
+    endTime: log.endTime ?? "",    category: ["networking", "security", "monitoring", "devops", "ai", "programming"].includes(log.category) ? log.category : "custom",
+    customCategory: ["networking", "security", "monitoring", "devops", "ai", "programming"].includes(log.category) ? "" : log.category,
     tags: log.tags,
     tagInput: "",
     content: log.content,
@@ -89,8 +91,7 @@ function payloadFromForm(form: LogForm) {
     title: form.title.trim(),
     date: form.date,
     startTime: form.startTime,
-    endTime: form.endTime,
-    category: form.category,
+    endTime: form.endTime,    category: form.category === "custom" ? form.customCategory.trim() || "other" : form.category,
     tags: form.tags,
     content: form.content.trim(),
     commands: form.commands.trim(),
@@ -307,14 +308,14 @@ export function NewJournalEntryPage() {
       <PageHeader
         eyebrow="Nhật ký học tập"
         title={isEditing ? "Chỉnh sửa buổi học" : "Ghi chép buổi học mới"}
-        description="Lưu lại lab, lệnh đã chạy, lỗi gặp phải và cách khắc phục để Huấn luyện AI, Phân tích và Tìm kiếm có dữ liệu hữu ích."
+        description="Lưu lại những điều đã học, lỗi đã gặp và cách xử lý để lần sau ôn lại dễ hơn."
         action={<Button icon={<Save size={17} />} onClick={save} disabled={isSaving || isLoadingEntry}>{isSaving ? "Đang lưu..." : "Lưu"}</Button>}
       />
       {loadError && <div className="settings-message settings-message-error" role="alert">{loadError}</div>}
       {isLoadingEntry ? (
         <Card className="journal-empty">
           <h2>Đang tải nhật ký...</h2>
-          <p>LearnFlow đang lấy dữ liệu mới nhất từ backend.</p>
+          <p>Đang mở lại nội dung nhật ký của bạn.</p>
         </Card>
       ) : (
         <div className="journal-editor-grid">
@@ -339,8 +340,15 @@ export function NewJournalEntryPage() {
                     <option value="devops">DevOps</option>
                     <option value="ai">AI</option>
                     <option value="programming">Lập trình</option>
+                    <option value="custom">Nhập chủ đề khác</option>
                   </select>
                 </div>
+                {form.category === "custom" && (
+                  <div className="form-field">
+                    <label>Chủ đề tự nhập</label>
+                    <Input value={form.customCategory} onChange={(event) => update("customCategory", event.target.value)} placeholder="Ví dụ: Serverless, CloudWatch..." />
+                  </div>
+                )}
               </div>
               <div className="form-field">
                 <label>Thẻ</label>
@@ -421,7 +429,7 @@ export function NewJournalEntryPage() {
               </div>
             </Card>
             <AiPanel title="Gợi ý ghi chép">
-              <p>Hãy ghi rõ bối cảnh, lệnh đã chạy, lỗi nhận được và cách sửa. Đây là nguyên liệu tốt nhất cho tóm tắt AI và báo cáo tuần.</p>
+              <p>Hãy ghi rõ bối cảnh, lệnh đã chạy, lỗi nhận được và cách sửa. Những chi tiết này sẽ giúp bạn ôn lại và theo dõi tiến bộ tốt hơn.</p>
             </AiPanel>
             <Card>
               <div className="section-heading"><h2>Trạng thái bản nháp</h2></div>

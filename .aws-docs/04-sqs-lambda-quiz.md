@@ -9,7 +9,7 @@
 1. Frontend gọi `POST /quiz` qua API Gateway.
 2. API Gateway xác thực Cognito JWT.
 3. Lambda API validate input và lấy `userId` từ JWT claims.
-4. Lambda API tạo quiz item trong `LearnFlowQuizzes` với `status = 'pending'`.
+4. Lambda API tạo quiz item trong `Quizzes` với `status = 'pending'`.
 5. Lambda API gửi message vào `quiz-jobs`.
 6. Frontend polling `GET /quiz/:id`.
 7. SQS trigger Lambda AI Worker.
@@ -78,7 +78,7 @@ Message từ Lambda API:
    - `options` gồm 4 lựa chọn
    - `answer_index`
    - `explanation`
-7. Ghi questions vào `LearnFlowQuizzes` hoặc bảng questions riêng nếu tách về sau.
+7. Ghi questions vào `Quizzes` hoặc bảng questions riêng nếu tách về sau.
 8. Update `status = 'completed'` và `completedAt`.
 9. Nếu lỗi, update `status = 'failed'` và `errorMessage`.
 

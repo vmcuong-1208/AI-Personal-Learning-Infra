@@ -2028,3 +2028,95 @@ button, input, textarea, select { font: inherit; }
   overflow-wrap: anywhere;
   line-height: 1.7;
 }
+
+/* Product polish: AI Personal Learning */
+.section-heading > .mono-label,
+.section-heading > div > .mono-label,
+.overview-card > .mono-label,
+.quiz-history-detail > .mono-label,
+.dropdown-panel > .mono-label,
+.mobile-sidebar-head > .mono-label {
+  display: none;
+}
+
+.brand-block strong {
+  line-height: 1.15;
+}
+
+.brand-block small {
+  margin-top: 2px;
+}
+
+@media (min-width: 1024px) {
+  .journal-list-shell .desktop-sidebar { display: flex; }
+  .journal-list-shell .app-navbar { left: 264px; }
+  .journal-list-shell .app-navbar > .icon-button { display: none; }
+  .journal-list-shell .app-main { width: calc(100% - 264px); margin-left: 264px; max-width: none; padding-left: 32px; padding-right: 32px; }
+}
+
+.compact-filter-card {
+  padding: 14px;
+}
+
+.aligned-filter-grid,
+.user-search-filter-grid,
+.quiz-source-grid {
+  align-items: start;
+}
+
+.form-field {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+
+.user-search-filter-grid .form-field,
+.aligned-filter-grid .form-field,
+.quiz-source-grid .form-field {
+  min-width: 0;
+}
+
+.user-search-filter-grid .tag-suggestions,
+.aligned-filter-grid .tag-suggestions {
+  min-height: 30px;
+}
+
+.report-controls {
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+}
+
+.coach-date-field .input {
+  max-width: 100%;
+}
+
+.quiz-source-grid {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .user-search-filter-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .user-search-filter-grid .search-tag-field,
+  .user-search-filter-grid .search-custom-topic-field,
+  .user-search-filter-grid .search-type-field {
+    grid-column: auto;
+  }
+  .aligned-filter-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .aligned-filter-grid .tag-filter-field {
+    grid-column: auto / span 2;
+  }
+  .quiz-source-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .api-preview,
+  .search-suggestion-row {
+    display: none;
+  }
+}

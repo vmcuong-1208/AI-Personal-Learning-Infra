@@ -133,12 +133,12 @@ Lambda API xử lý request đồng bộ: journal CRUD, search, analytics, tạo
 
 ```bash
 AWS_REGION=ap-southeast-1
-USERS_TABLE=LearnFlowUsers
-JOURNAL_TABLE=LearnFlowJournalLogs
-AI_REPORT_TABLE=LearnFlowAiReports
-QUIZ_TABLE=LearnFlowQuizzes
-QUIZ_ATTEMPT_TABLE=LearnFlowQuizAttempts
-JOURNAL_IMAGES_BUCKET=learnflow-journal-images
+USERS_TABLE=Users
+JOURNAL_TABLE=JournalLogs
+AI_REPORT_TABLE=AiReports
+QUIZ_TABLE=Quizzes
+QUIZ_ATTEMPT_TABLE=QuizAttempts
+JOURNAL_IMAGES_BUCKET=ai-personal-learning-images
 AI_REPORT_QUEUE_URL=https://sqs.<region>.amazonaws.com/<account-id>/ai-report-jobs
 QUIZ_QUEUE_URL=https://sqs.<region>.amazonaws.com/<account-id>/quiz-jobs
 ```
@@ -187,26 +187,26 @@ DynamoDB thay thế RDS PostgreSQL để lưu dữ liệu ứng dụng.
 ### Bảng đề xuất cho MVP
 
 ```text
-LearnFlowUsers
+Users
 PK: userId
 
-LearnFlowJournalLogs
+JournalLogs
 PK: userId
 SK: entryId
 GSI: userId-createdAt-index
 GSI: userId-topic-index
 
-LearnFlowAiReports
+AiReports
 PK: userId
 SK: reportId
 GSI: userId-createdAt-index
 
-LearnFlowQuizzes
+Quizzes
 PK: userId
 SK: quizId
 GSI: userId-createdAt-index
 
-LearnFlowQuizAttempts
+QuizAttempts
 PK: userId
 SK: attemptId
 GSI: quizId-submittedAt-index
@@ -225,7 +225,7 @@ Test theo thứ tự:
 
 1. `GET /health` trả `{ "ok": true }`.
 2. `GET /me` trả user từ Cognito claims.
-3. `POST /logs` tạo item trong `LearnFlowJournalLogs`.
+3. `POST /logs` tạo item trong `JournalLogs`.
 4. `GET /logs` list đúng log của user hiện tại.
 5. `GET /logs/{id}` trả đúng chi tiết log.
 6. `PUT /logs/{id}` cập nhật item.
@@ -283,7 +283,7 @@ Không upload ảnh qua Lambda body. Lambda API chỉ sinh presigned URL, fronte
 Tên đề xuất:
 
 ```text
-learnflow-journal-images
+ai-personal-learning-images
 ```
 
 Cấu hình:
@@ -431,7 +431,7 @@ POST /quiz/{id}/attempts
 1. Lambda API đọc quiz từ DynamoDB.
 2. Kiểm tra quiz thuộc user hiện tại.
 3. Chấm điểm bằng `answer_index`.
-4. Ghi attempt vào `LearnFlowQuizAttempts`.
+4. Ghi attempt vào `QuizAttempts`.
 5. Trả score và explanations.
 
 ## 9. Tạo Lambda AI Worker Và Kết Nối Bedrock
@@ -444,9 +444,9 @@ Lambda AI Worker nhận job từ SQS, gọi Bedrock, validate output, rồi cậ
 
 ```bash
 AWS_REGION=ap-southeast-1
-JOURNAL_TABLE=LearnFlowJournalLogs
-AI_REPORT_TABLE=LearnFlowAiReports
-QUIZ_TABLE=LearnFlowQuizzes
+JOURNAL_TABLE=JournalLogs
+AI_REPORT_TABLE=AiReports
+QUIZ_TABLE=Quizzes
 BEDROCK_MODEL_ID=<model-id>
 ```
 

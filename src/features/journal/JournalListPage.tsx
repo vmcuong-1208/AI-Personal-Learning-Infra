@@ -1,4 +1,4 @@
-﻿import { FileBarChart2, Filter, Plus, SearchX, SlidersHorizontal } from "lucide-react";
+import { FileBarChart2, Filter, Plus, SearchX, SlidersHorizontal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button, Card, Chip, Input, PageHeader } from "../../components/ui";
@@ -31,6 +31,7 @@ function daysAgo(days: number) {
 export function JournalListPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [range, setRange] = useState<"all" | "today" | "7" | "30">("30");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -48,7 +49,6 @@ export function JournalListPage() {
   const [flashMessage, setFlashMessage] = useState(initialMessage);
   const [isFlashLeaving, setIsFlashLeaving] = useState(false);
 
-
   useEffect(() => {
     if (!flashMessage) return;
 
@@ -65,6 +65,7 @@ export function JournalListPage() {
       window.clearTimeout(clearTimer);
     };
   }, [flashMessage, location.pathname, navigate]);
+
   useEffect(() => {
     let ignore = false;
 
@@ -102,6 +103,7 @@ export function JournalListPage() {
 
   const visibleLogs = filteredLogs.slice((page - 1) * pageSize, page * pageSize);
   const totalPages = Math.max(1, Math.ceil(filteredLogs.length / pageSize));
+  const activeFilterCount = [dateFrom || dateTo, category !== "all" || customCategory, tags.length > 0, difficulty !== "all", range !== "30"].filter(Boolean).length;
 
   function addTag(tag: string) {
     const value = tag.trim();
@@ -114,68 +116,74 @@ export function JournalListPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Nhật ký học tập"
         title="Danh sách nhật ký học"
-        description="Theo dõi buổi học, lab, lỗi gặp phải và cách khắc phục theo từng chủ đề."
+        description="Theo dõi các buổi học, ghi chú quan trọng và những điều cần ôn lại."
         action={
           <div className="page-actions">
-            <Button to="/coach" variant="secondary" icon={<FileBarChart2 size={17} />}>Tạo báo cáo tuần</Button>
+            <Button variant="secondary" icon={<SlidersHorizontal size={17} />} onClick={() => setIsFilterOpen((current) => !current)}>
+              {isFilterOpen ? "Ẩn bộ lọc" : `Bộ lọc${activeFilterCount ? ` (${activeFilterCount})` : ""}`}
+            </Button>
+            <Button to="/coach" variant="secondary" icon={<FileBarChart2 size={17} />}>Tạo báo cáo</Button>
             <Button to="/journal/new" icon={<Plus size={17} />}>Ghi nhật ký mới</Button>
           </div>
         }
       />
       {flashMessage && <div className={`login-success${isFlashLeaving ? " is-leaving" : ""}`} role="status">{flashMessage}</div>}
       {loadError && <div className="settings-message settings-message-error" role="alert">{loadError}</div>}
-      <Card className="journal-filter-card">
-        <div className="section-heading"><SlidersHorizontal size={18} /><h2>Bộ lọc</h2></div>
-        <div className="quick-filter-row">
-          {[
-            ["today", "Hôm nay"],
-            ["7", "7 ngày trước"],
-            ["30", "30 ngày trước"],
-            ["all", "Tất cả"]
-          ].map(([value, label]) => (
-            <Button key={value} size="sm" variant={range === value ? "primary" : "ghost"} onClick={() => { setRange(value as typeof range); setPage(1); }}>{label}</Button>
-          ))}
-        </div>
-        <div className="journal-filter-grid">
-          <div className="form-field"><label>Từ ngày</label><Input type="date" value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); setRange("all"); setPage(1); }} /></div>
-          <div className="form-field"><label>Đến ngày</label><Input type="date" value={dateTo} onChange={(event) => { setDateTo(event.target.value); setRange("all"); setPage(1); }} /></div>
-          <div className="form-field">
-            <label>Chủ đề / danh mục</label>
-            <select className="input" value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }}>
-              {categories.map((item) => <option key={item} value={item}>{categoryLabels[item]}</option>)}
-              <option value="custom">Nhập danh mục khác</option>
-            </select>
+
+      {isFilterOpen && (
+        <Card className="journal-filter-card compact-filter-card">
+          <div className="section-heading"><h2>Bộ lọc nhật ký</h2><p>Thu hẹp danh sách theo thời gian, chủ đề, thẻ hoặc độ khó.</p></div>
+          <div className="quick-filter-row">
+            {[
+              ["today", "Hôm nay"],
+              ["7", "7 ngày"],
+              ["30", "30 ngày"],
+              ["all", "Tất cả"]
+            ].map(([value, label]) => (
+              <Button key={value} size="sm" variant={range === value ? "primary" : "ghost"} onClick={() => { setRange(value as typeof range); setPage(1); }}>{label}</Button>
+            ))}
           </div>
-          <div className="form-field">
-            <label>Độ khó</label>
-            <select className="input" value={difficulty} onChange={(event) => { setDifficulty(event.target.value); setPage(1); }}>
-              <option value="all">Tất cả (1-5)</option>
-              {[1, 2, 3, 4, 5].map((value) => <option key={value} value={value}>{value} / 5</option>)}
-            </select>
+          <div className="journal-filter-grid aligned-filter-grid">
+            <div className="form-field"><label>Từ ngày</label><Input type="date" value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); setRange("all"); setPage(1); }} /></div>
+            <div className="form-field"><label>Đến ngày</label><Input type="date" value={dateTo} onChange={(event) => { setDateTo(event.target.value); setRange("all"); setPage(1); }} /></div>
+            <div className="form-field">
+              <label>Chủ đề / danh mục</label>
+              <select className="input" value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }}>
+                {categories.map((item) => <option key={item} value={item}>{categoryLabels[item]}</option>)}
+                <option value="custom">Nhập danh mục khác</option>
+              </select>
+            </div>
+            <div className="form-field">
+              <label>Độ khó</label>
+              <select className="input" value={difficulty} onChange={(event) => { setDifficulty(event.target.value); setPage(1); }}>
+                <option value="all">Tất cả</option>
+                {[1, 2, 3, 4, 5].map((value) => <option key={value} value={value}>{value} / 5</option>)}
+              </select>
+            </div>
+            {category === "custom" && (
+              <div className="form-field"><label>Danh mục tự nhập</label><Input value={customCategory} onChange={(event) => { setCustomCategory(event.target.value); setPage(1); }} placeholder="Ví dụ: cloud" /></div>
+            )}
+            <div className="form-field tag-filter-field">
+              <label>Thẻ</label>
+              <Input value={tagInput} onChange={(event) => setTagInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addTag(tagInput); } }} placeholder="Nhập thẻ rồi nhấn Enter" />
+              <div className="tag-suggestions">{commonTags.map((tag) => <button key={tag} type="button" onClick={() => addTag(tag)}>{tag}</button>)}</div>
+            </div>
           </div>
-          {category === "custom" && (
-            <div className="form-field"><label>Danh mục tự nhập</label><Input value={customCategory} onChange={(event) => { setCustomCategory(event.target.value); setPage(1); }} placeholder="Ví dụ: cloud" /></div>
-          )}
-          <div className="form-field tag-filter-field">
-            <label>Thẻ</label>
-            <Input value={tagInput} onChange={(event) => setTagInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addTag(tagInput); } }} placeholder="Nhập thẻ rồi nhấn Enter" />
-            <div className="tag-suggestions">{commonTags.map((tag) => <button key={tag} type="button" onClick={() => addTag(tag)}>{tag}</button>)}</div>
-          </div>
-        </div>
-        {tags.length > 0 && <div className="page-actions">{tags.map((tag) => <button className="tag-removable" key={tag} onClick={() => { setTags((current) => current.filter((item) => item !== tag)); setPage(1); }}>{tag} ×</button>)}</div>}
-      </Card>
+          {tags.length > 0 && <div className="page-actions">{tags.map((tag) => <button className="tag-removable" key={tag} onClick={() => { setTags((current) => current.filter((item) => item !== tag)); setPage(1); }}>{tag} ×</button>)}</div>}
+        </Card>
+      )}
+
       {isLoading ? (
         <Card className="journal-empty">
           <h2>Đang tải nhật ký...</h2>
-          <p>LearnFlow đang lấy dữ liệu mới nhất từ backend.</p>
+          <p>Danh sách của bạn sẽ sẵn sàng trong giây lát.</p>
         </Card>
       ) : visibleLogs.length === 0 ? (
         <Card className="journal-empty">
           <SearchX size={30} />
           <h2>Bạn chưa có nhật ký học nào.</h2>
-          <p>Bấm vào “Ghi nhật ký mới” để bắt đầu ghi lại trong quá trình học.</p>
+          <p>Bấm vào “Ghi nhật ký mới” để bắt đầu lưu lại quá trình học.</p>
           <Button to="/journal/new" icon={<Plus size={17} />}>Ghi nhật ký mới</Button>
         </Card>
       ) : (
@@ -211,5 +219,3 @@ export function JournalListPage() {
     </>
   );
 }
-
-

@@ -5,7 +5,6 @@ import { ApiClientError } from "../../lib/apiClient";
 import { createAiReport, getAiReportById, getAiReports, type AiReport, type AiReportStatus, type AiReportType } from "./aiCoachApi";
 
 type ReportPeriod = AiReportType;
-type JobStatus = "idle" | AiReportStatus;
 
 const fallbackReports: AiReport[] = [
   {
@@ -24,9 +23,7 @@ const fallbackReports: AiReport[] = [
   }
 ];
 
-const statusLabels: Record<JobStatus, string> = {
-  idle: "Chưa tạo yêu cầu",
-  pending: "Đang chờ",
+const statusLabels: Record<AiReportStatus, string> = {  pending: "Đang chờ",
   processing: "Đang xử lý",
   completed: "Hoàn thành",
   failed: "Thất bại"
@@ -68,12 +65,12 @@ function parseWeekInput(value: string) {
   return addDays(firstMonday, (week - 1) * 7);
 }
 
-function resolveReportRange(period: ReportPeriod, quickRange: string, customDate: string) {
+function resolveReportRange(period: ReportPeriod, customDate: string) {
   const now = new Date();
 
   if (period === "weekly") {
     const customStart = customDate ? parseWeekInput(customDate) : null;
-    const start = customStart ?? addDays(startOfWeek(now), quickRange === "last-week" ? -7 : 0);
+    const start = customStart ?? startOfWeek(now);
     return {
       startDate: toDateInputValue(start),
       endDate: toDateInputValue(addDays(start, 6))
@@ -83,7 +80,7 @@ function resolveReportRange(period: ReportPeriod, quickRange: string, customDate
   const customMonth = customDate ? new Date(`${customDate}-01T00:00:00`) : null;
   const baseMonth = customMonth && !Number.isNaN(customMonth.getTime())
     ? customMonth
-    : new Date(now.getFullYear(), now.getMonth() + (quickRange === "last-month" ? -1 : 0), 1);
+    : new Date(now.getFullYear(), now.getMonth(), 1);
 
   return {
     startDate: toDateInputValue(baseMonth),
@@ -104,9 +101,7 @@ function isFallbackAllowed(error: unknown) {
 
 export function AiCoachPage() {
   const [period, setPeriod] = useState<ReportPeriod>("weekly");
-  const [quickRange, setQuickRange] = useState("this-week");
   const [customDate, setCustomDate] = useState("");
-  const [jobStatus, setJobStatus] = useState<JobStatus>("idle");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
   const [banner, setBanner] = useState("");
@@ -119,16 +114,6 @@ export function AiCoachPage() {
     () => reports.find((report) => report.id === selectedReportId) ?? reports[0],
     [reports, selectedReportId]
   );
-
-  const rangeOptions = period === "weekly"
-    ? [
-      { value: "this-week", label: "Tuần này" },
-      { value: "last-week", label: "Tuần trước" }
-    ]
-    : [
-      { value: "this-month", label: "Tháng này" },
-      { value: "last-month", label: "Tháng trước" }
-    ];
 
   const refreshReports = useCallback(async () => {
     setIsLoadingReports(true);
@@ -162,19 +147,15 @@ export function AiCoachPage() {
         const nextReport = await getAiReportById(reportId);
         setReports((current) => [nextReport, ...current.filter((report) => report.id !== nextReport.id)]);
         setSelectedReportId(nextReport.id);
-        setJobStatus(nextReport.status);
-
         if (nextReport.status === "completed" || nextReport.status === "failed" || attempt >= MAX_POLL_ATTEMPTS) {
           setIsGenerating(false);
-          setBanner(nextReport.status === "completed" ? "Báo cáo AI đã hoàn thành." : "Báo cáo AI chưa hoàn tất. Hãy kiểm tra lại worker hoặc DLQ nếu trạng thái không đổi.");
+          setBanner(nextReport.status === "completed" ? "Báo cáo AI đã hoàn thành." : "Báo cáo chưa hoàn tất. Vui lòng thử làm mới sau ít phút.");
           return;
         }
 
         pollReport(reportId, attempt + 1);
       } catch (nextError) {
-        setIsGenerating(false);
-        setJobStatus("failed");
-        setError(nextError instanceof Error ? nextError.message : "Không kiểm tra được trạng thái báo cáo.");
+        setIsGenerating(false);        setError(nextError instanceof Error ? nextError.message : "Không kiểm tra được trạng thái báo cáo.");
       }
     }, POLL_INTERVAL_MS);
   }, [stopPolling]);
@@ -185,10 +166,8 @@ export function AiCoachPage() {
   }, [refreshReports, stopPolling]);
 
   async function generateReport() {
-    const range = resolveReportRange(period, quickRange, customDate);
-    setIsGenerating(true);
-    setJobStatus("pending");
-    setBanner("Đã gửi yêu cầu tạo báo cáo AI. Worker đang xử lý qua SQS.");
+    const range = resolveReportRange(period, customDate);
+    setIsGenerating(true);    setBanner("Đã bắt đầu tạo báo cáo AI. Bạn có thể tiếp tục sử dụng ứng dụng trong lúc chờ.");
     setError("");
 
     try {
@@ -198,14 +177,10 @@ export function AiCoachPage() {
       pollReport(createdReport.id);
     } catch (nextError) {
       if (isFallbackAllowed(nextError)) {
-        setIsGenerating(false);
-        setJobStatus("completed");
-        setBanner("Đang chạy dữ liệu demo vì frontend chưa có phiên đăng nhập/backend để gọi API thật.");
+        setIsGenerating(false);        setBanner("Đang hiển thị báo cáo mẫu vì chưa có dữ liệu cá nhân để tạo báo cáo mới.");
         return;
       }
-      setIsGenerating(false);
-      setJobStatus("failed");
-      setError(nextError instanceof Error ? nextError.message : "Không tạo được yêu cầu báo cáo AI.");
+      setIsGenerating(false);      setError(nextError instanceof Error ? nextError.message : "Không tạo được yêu cầu báo cáo AI.");
     }
   }
 
@@ -214,7 +189,7 @@ export function AiCoachPage() {
       <PageHeader
         eyebrow="Huấn luyện AI"
         title="AI Learning Coach"
-        description="Tóm tắt và đề xuất do AI tạo ra dựa trên nhật ký học tập của bạn."
+        description="Tạo báo cáo học tập theo tuần hoặc tháng để xem điểm mạnh, điểm cần cải thiện và gợi ý ôn tập."
         action={<Button variant="ghost" onClick={refreshReports} icon={<RefreshCw size={17} />} disabled={isLoadingReports}>Làm mới</Button>}
       />
 
@@ -225,54 +200,40 @@ export function AiCoachPage() {
         <div className="coach-main-stack">
           <Card className="coach-generate-card">
             <div className="section-heading">
-              <span className="mono-label">Báo cáo</span>
-              <h2>Generate AI Report</h2>
-              <p>Chọn chu kỳ và khoảng thời gian cần phân tích. Frontend sẽ tạo job, nhận trạng thái pending và tự hỏi lại backend đến khi worker hoàn tất.</p>
+              
+              <h2>Tạo báo cáo AI</h2>
+              <p>Chọn loại báo cáo và mốc thời gian bạn muốn xem lại.</p>
             </div>
 
             <div className="report-controls">
               <fieldset className="segmented-field">
                 <legend>Chu kỳ báo cáo</legend>
                 <label>
-                  <input checked={period === "weekly"} name="period" type="radio" onChange={() => { setPeriod("weekly"); setQuickRange("this-week"); setCustomDate(""); }} />
-                  <span>Weekly</span>
+                  <input checked={period === "weekly"} name="period" type="radio" onChange={() => { setPeriod("weekly"); setCustomDate(""); }} />
+                  <span>Theo tuần</span>
                 </label>
                 <label>
-                  <input checked={period === "monthly"} name="period" type="radio" onChange={() => { setPeriod("monthly"); setQuickRange("this-month"); setCustomDate(""); }} />
-                  <span>Monthly</span>
+                  <input checked={period === "monthly"} name="period" type="radio" onChange={() => { setPeriod("monthly"); setCustomDate(""); }} />
+                  <span>Theo tháng</span>
                 </label>
               </fieldset>
-
               <div className="form-field">
-                <label htmlFor="coach-range">Khoảng thời gian</label>
-                <select id="coach-range" className="input" value={quickRange} onChange={(event) => setQuickRange(event.target.value)}>
-                  {rangeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
-              </div>
-
-              <div className="form-field">
-                <label htmlFor="coach-custom-date">Tùy chỉnh</label>
+                <label htmlFor="coach-custom-date">Mốc thời gian</label>
                 <Input id="coach-custom-date" type={period === "weekly" ? "week" : "month"} value={customDate} onChange={(event) => setCustomDate(event.target.value)} />
               </div>
             </div>
 
             <div className="generate-actions">
               <Button className="generate-button" onClick={generateReport} icon={<Sparkles size={18} />} disabled={isGenerating}>
-                {isGenerating ? "Sending request..." : "Generate AI Report"}
+                {isGenerating ? "Đang tạo..." : "Tạo báo cáo"}
               </Button>
-              {isGenerating && <p>Your report is being generated in the background. You can continue using the app.</p>}
-            </div>
-
-            <div className={`job-status job-${jobStatus}`}>
-              <span>Trạng thái job</span>
-              <strong>{statusLabels[jobStatus]}</strong>
-            </div>
-          </Card>
+              {isGenerating && <p>Báo cáo đang được tạo. Bạn có thể quay lại xem sau.</p>}
+            </div>          </Card>
 
           <Card>
             <div className="section-heading report-list-heading">
               <div>
-                <span className="mono-label">Lịch sử</span>
+                
                 <h2>Danh sách báo cáo</h2>
               </div>
               <Chip tone="primary">{reports.length} báo cáo</Chip>
@@ -301,7 +262,7 @@ export function AiCoachPage() {
             {selectedReport ? (
               <>
                 <div className="section-heading">
-                  <span className="mono-label">Chi tiết</span>
+                  
                   <h2>{selectedReport.title}</h2>
                   <p>{selectedReport.range}</p>
                 </div>
