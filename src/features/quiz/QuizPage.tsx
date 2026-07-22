@@ -1,8 +1,7 @@
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock3, History, RefreshCw, Sparkles, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card, Chip, Input, PageHeader, ProgressBar } from "../../components/ui";
-import { ApiClientError } from "../../lib/apiClient";
-import { createQuiz, getQuizAttempts, getQuizById, submitQuizAttempt, type PracticeQuestion, type Quiz, type QuizAttempt, type QuizDifficulty, type QuizSource, type QuizStatus } from "./quizApi";
+import { createQuiz, getQuizAttempts, getQuizById, getQuizzes, submitQuizAttempt, type PracticeQuestion, type Quiz, type QuizAttempt, type QuizDifficulty, type QuizSource, type QuizStatus } from "./quizApi";
 
 type QuizHistoryItem = {
   id: string;
@@ -25,91 +24,6 @@ const topicOptions = ["AWS", "VPC", "IAM", "CloudWatch", "NAT Gateway", "VPN", "
 const POLL_INTERVAL_MS = 3000;
 const MAX_POLL_ATTEMPTS = 40;
 
-const questionBank: PracticeQuestion[] = [
-  {
-    id: "nat-gateway-error",
-    topic: "Networking",
-    prompt: "Trong lab NAT Gateway, lỗi chính bạn gặp là gì?",
-    options: [
-      "Route table chưa trỏ subnet private qua NAT Gateway",
-      "Security group mở quá nhiều port inbound",
-      "IAM role thiếu quyền ghi CloudWatch Logs",
-      "VPN tunnel bị lệch thuật toán mã hóa"
-    ],
-    answerIndex: 0,
-    explanation: "Nhật ký tập trung vào việc kiểm tra route table và kết nối NAT Gateway cho subnet private."
-  },
-  {
-    id: "cloudwatch-alarm",
-    topic: "Monitoring",
-    prompt: "Khi theo dõi CloudWatch Alarm, bước nào giúp xác nhận alarm đang đọc đúng metric?",
-    options: [
-      "Đổi tên alarm để dễ nhận diện",
-      "Kiểm tra namespace, dimension và khoảng thời gian thống kê",
-      "Tăng số instance để tạo thêm dữ liệu",
-      "Xóa alarm rồi tạo lại bằng tên khác"
-    ],
-    answerIndex: 1,
-    explanation: "Metric sai namespace hoặc dimension thường khiến alarm không phản ánh đúng trạng thái hệ thống."
-  },
-  {
-    id: "iam-role-error",
-    topic: "Security",
-    prompt: "Với lỗi IAM role, tín hiệu nào nên kiểm tra trước?",
-    options: [
-      "Màu giao diện AWS Console",
-      "Policy attached, trust relationship và resource ARN",
-      "Tên VPC đang dùng trong cùng region",
-      "Số lượng tag trên EC2 instance"
-    ],
-    answerIndex: 1,
-    explanation: "IAM thường lỗi ở quyền được gắn, quan hệ tin cậy hoặc ARN tài nguyên không khớp."
-  },
-  {
-    id: "redis-retry",
-    topic: "DevOps",
-    prompt: "Trong ghi chú retry queue, retry khác idempotency ở điểm nào?",
-    options: [
-      "Retry là thử lại tác vụ, idempotency là đảm bảo thử lại không gây side effect sai",
-      "Retry chỉ dùng cho frontend, idempotency chỉ dùng cho database",
-      "Retry luôn thay thế được dead-letter queue",
-      "Idempotency là cách tăng tốc Redis Stream"
-    ],
-    answerIndex: 0,
-    explanation: "Retry quyết định có thử lại hay không; idempotency bảo vệ tính an toàn khi thao tác chạy nhiều lần."
-  },
-  {
-    id: "kubernetes-probe",
-    topic: "Monitoring",
-    prompt: "Probe nào ngăn traffic đi vào pod trước khi pod sẵn sàng?",
-    options: ["Liveness probe", "Readiness probe", "Startup probe", "Node probe"],
-    answerIndex: 1,
-    explanation: "Readiness probe quyết định pod có được đưa vào service endpoints hay không."
-  }
-];
-
-const initialHistoryItems: QuizHistoryItem[] = [
-  {
-    id: "quiz-demo-2026",
-    title: "Quiz demo - Networking và Monitoring",
-    createdAt: "2026-06-25T20:10:00.000Z",
-    source: "Nhật ký tuần này",
-    difficulty: "Medium",
-    score: "4/5",
-    status: "Completed"
-  }
-];
-
-function buildQuizQuestions(count: number) {
-  return Array.from({ length: count }, (_, index) => {
-    const base = questionBank[index % questionBank.length];
-    return {
-      ...base,
-      id: `${base.id}-${index + 1}`,
-      prompt: index < questionBank.length ? base.prompt : `${base.prompt} (biến thể ${Math.floor(index / questionBank.length) + 1})`
-    };
-  });
-}
 
 function formatTime(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
@@ -158,30 +72,33 @@ function resolveQuizRange(source: QuizSource, sourceDate: string, topicFrom: str
   return { startDate: toDateInputValue(start), endDate: toDateInputValue(end) };
 }
 
-function isFallbackAllowed(error: unknown) {
-  return error instanceof ApiClientError && (error.code === "CONFIG_ERROR" || error.code === "AUTH_REQUIRED" || error.code === "UNAUTHORIZED");
-}
 
-function buildFallbackQuiz(sourceType: QuizSource, topic: string, questionCount: number, difficulty: QuizDifficulty): Quiz {
-  const now = new Date().toISOString();
-  return {
-    id: `quiz-demo-${Date.now()}`,
-    title: `Quiz ${sourceType === "topic" ? topic : sourceLabels[sourceType]}`,
-    sourceType,
-    topic,
-    questionCount,
-    difficulty,
-    status: "completed",
-    createdAt: now,
-    questions: buildQuizQuestions(questionCount)
-  };
-}
+
+
 
 function getStatusLabel(status: QuizStatus) {
   if (status === "completed") return "Hoàn thành";
   if (status === "failed") return "Thất bại";
   if (status === "processing") return "Đang xử lý";
   return "Đang chờ";
+}
+
+function getHistoryStatus(quiz: Quiz, attempt?: QuizAttempt): QuizHistoryItem["status"] {
+  if (attempt) return "Completed";
+  if (quiz.status === "failed") return "Failed";
+  return "Pending";
+}
+
+function buildHistoryItem(quiz: Quiz, attempt?: QuizAttempt): QuizHistoryItem {
+  return {
+    id: quiz.id,
+    title: quiz.title,
+    createdAt: quiz.createdAt,
+    source: sourceLabels[quiz.sourceType] ?? quiz.topic,
+    difficulty: quiz.difficulty,
+    score: attempt ? `${attempt.score}/${attempt.totalQuestions || quiz.questions.length || quiz.questionCount}` : "--",
+    status: getHistoryStatus(quiz, attempt)
+  };
 }
 
 export function QuizPage() {
@@ -199,8 +116,9 @@ export function QuizPage() {
   const [started, setStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(questionCount * 60);
-  const [selectedHistoryId, setSelectedHistoryId] = useState(initialHistoryItems[0].id);
-  const [historyItems, setHistoryItems] = useState<QuizHistoryItem[]>(initialHistoryItems);
+  const [selectedHistoryId, setSelectedHistoryId] = useState("");
+  const [historyItems, setHistoryItems] = useState<QuizHistoryItem[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
   const [quizStatus, setQuizStatus] = useState<QuizStatus>("pending");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -215,7 +133,7 @@ export function QuizPage() {
   const selectedTopic = topic === "custom" ? customTopic.trim() : topic;
   const selectedHistory = historyItems.find((item) => item.id === selectedHistoryId) ?? historyItems[0];
   const selectedAttempt = selectedHistoryId ? attemptDetails[selectedHistoryId] : undefined;
-  const questions = activeQuiz?.questions ?? buildQuizQuestions(questionCount);
+  const questions = activeQuiz?.questions ?? [];
   const currentQuestion = questions[currentIndex] ?? questions[0];
   const answeredCount = questions.filter((question) => answers[question.id] !== undefined).length;
   const localCorrectCount = questions.filter((question) => answers[question.id] === question.answerIndex).length;
@@ -224,14 +142,17 @@ export function QuizPage() {
   const completion = Math.round((answeredCount / Math.max(questions.length, 1)) * 100);
 
   const startQuiz = useCallback((quiz: Quiz) => {
-    const nextQuestions = quiz.questions.length ? quiz.questions : buildQuizQuestions(quiz.questionCount);
-    setActiveQuiz({ ...quiz, questions: nextQuestions });
+    if (quiz.questions.length === 0) {
+      setError("Khong co cau hoi nao trong quiz nay.");
+      return;
+    }
+    setActiveQuiz(quiz);
     setAnswers({});
     setSubmitted(false);
     setAttemptScore(null);
     setStarted(true);
     setCurrentIndex(0);
-    setTimeLeft(Math.max(nextQuestions.length, 1) * 60);
+    setTimeLeft(Math.max(quiz.questions.length, 1) * 60);
     setQuizStatus(quiz.status);
   }, []);
 
@@ -244,11 +165,7 @@ export function QuizPage() {
 
   const upsertHistory = useCallback((quiz: Quiz, statusLabel?: QuizHistoryItem["status"], score = "--") => {
     const item: QuizHistoryItem = {
-      id: quiz.id,
-      title: quiz.title,
-      createdAt: quiz.createdAt,
-      source: sourceLabels[quiz.sourceType] ?? quiz.topic,
-      difficulty: quiz.difficulty,
+      ...buildHistoryItem(quiz),
       score,
       status: statusLabel ?? (quiz.status === "completed" ? "Completed" : quiz.status === "failed" ? "Failed" : "Pending")
     };
@@ -293,6 +210,38 @@ export function QuizPage() {
 
   useEffect(() => stopPolling, [stopPolling]);
 
+  const loadQuizHistory = useCallback(async () => {
+    setIsLoadingHistory(true);
+    try {
+      const quizzes = await getQuizzes();
+      const attemptsByQuiz: Record<string, QuizAttempt> = {};
+      const items = await Promise.all(quizzes.map(async (quiz) => {
+        try {
+          const attempts = await getQuizAttempts(quiz.id);
+          const latestAttempt = attempts[0];
+          if (latestAttempt) attemptsByQuiz[quiz.id] = latestAttempt;
+          return buildHistoryItem(quiz, latestAttempt);
+        } catch {
+          return buildHistoryItem(quiz);
+        }
+      }));
+
+      setAttemptDetails((current) => ({ ...current, ...attemptsByQuiz }));
+      setHistoryItems(items);
+      setSelectedHistoryId((current) => items.some((item) => item.id === current) ? current : items[0]?.id ?? "");
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Không tải được lịch sử quiz từ backend.");
+      setHistoryItems([]);
+      setSelectedHistoryId("");
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadQuizHistory();
+  }, [loadQuizHistory]);
+
   useEffect(() => {
     if (!banner || isGenerating) return;
     const timeout = window.setTimeout(() => setBanner(""), 3000);
@@ -300,7 +249,7 @@ export function QuizPage() {
   }, [banner, isGenerating]);
 
   useEffect(() => {
-    if (!selectedHistoryId || selectedHistoryId.startsWith("quiz-demo-") || attemptDetails[selectedHistoryId]) return;
+    if (!selectedHistoryId || attemptDetails[selectedHistoryId]) return;
     let ignore = false;
     getQuizAttempts(selectedHistoryId)
       .then((attempts) => {
@@ -356,18 +305,11 @@ export function QuizPage() {
       }
       pollQuiz(createdQuiz.id);
     } catch (nextError) {
-      if (isFallbackAllowed(nextError)) {
-        const demoQuiz = buildFallbackQuiz(source, selectedTopic || topic, questionCount, difficulty);
-        setIsGenerating(false);
-        setBanner("Đang mở quiz mẫu vì chưa có đủ dữ liệu cá nhân để tạo quiz mới.");
-        upsertHistory(demoQuiz, "Completed");
-        startQuiz(demoQuiz);
-        return;
-      }
       setIsGenerating(false);
-      setError(nextError instanceof Error ? nextError.message : "Không tạo được quiz AI.");
+      setError(nextError instanceof Error ? nextError.message : "Khong tao duoc quiz AI.");
     }
   }
+
 
   function resetToSetup() {
     stopPolling();
@@ -402,44 +344,13 @@ export function QuizPage() {
     setError("");
 
     try {
-      if (!activeQuiz.id.startsWith("quiz-demo-")) {
-        const orderedAnswers = activeQuiz.questions.map((question) => answers[question.id] ?? -1);
-        const attempt = await submitQuizAttempt(activeQuiz.id, orderedAnswers);
-        setAttemptScore(attempt.score);
-        setAttemptDetails((current) => ({ ...current, [activeQuiz.id]: attempt }));
-        upsertHistory(activeQuiz, "Completed", `${attempt.score}/${attempt.totalQuestions || activeQuiz.questions.length}`);
-      } else {
-        const demoAttempt: QuizAttempt = {
-          id: `att-demo-${Date.now()}`,
-          quizId: activeQuiz.id,
-          score: localCorrectCount,
-          totalQuestions: questions.length,
-          submittedAt: new Date().toISOString(),
-          answers: activeQuiz.questions.map((question) => ({
-            ...question,
-            userAnswer: answers[question.id] ?? -1,
-            isCorrect: answers[question.id] === question.answerIndex
-          }))
-        };
-        setAttemptDetails((current) => ({ ...current, [activeQuiz.id]: demoAttempt }));
-        upsertHistory(activeQuiz, "Completed", `${localCorrectCount}/${questions.length}`);
-      }
+      const orderedAnswers = activeQuiz.questions.map((question) => answers[question.id] ?? -1);
+      const attempt = await submitQuizAttempt(activeQuiz.id, orderedAnswers);
+      setAttemptScore(attempt.score);
+      setAttemptDetails((current) => ({ ...current, [activeQuiz.id]: attempt }));
+      upsertHistory(activeQuiz, "Completed", `${attempt.score}/${attempt.totalQuestions || activeQuiz.questions.length}`);
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "Không nộp được bài quiz lên backend. Kết quả tạm tính vẫn hiển thị ở frontend.");
-      const localAttempt: QuizAttempt = {
-        id: `att-local-${Date.now()}`,
-        quizId: activeQuiz.id,
-        score: localCorrectCount,
-        totalQuestions: questions.length,
-        submittedAt: new Date().toISOString(),
-        answers: activeQuiz.questions.map((question) => ({
-          ...question,
-          userAnswer: answers[question.id] ?? -1,
-          isCorrect: answers[question.id] === question.answerIndex
-        }))
-      };
-      setAttemptDetails((current) => ({ ...current, [activeQuiz.id]: localAttempt }));
-      upsertHistory(activeQuiz, "Completed", `${localCorrectCount}/${questions.length}`);
+      setError(nextError instanceof Error ? nextError.message : "Khong nop duoc bai quiz len backend.");
     } finally {
       setIsSubmitting(false);
     }
@@ -569,10 +480,22 @@ export function QuizPage() {
               <h2>Lịch sử quiz</h2>
             </div>
             <div className="quiz-history-list">
+              {isLoadingHistory && (
+                <div className="search-empty">
+                  <History size={30} />
+                  <p>Đang tải lịch sử quiz...</p>
+                </div>
+              )}
+              {!isLoadingHistory && historyItems.length === 0 && (
+                <div className="search-empty">
+                  <History size={30} />
+                  <p>Chưa có lịch sử quiz. Tạo quiz mới để xem lại kết quả ở đây.</p>
+                </div>
+              )}
               {historyItems.map((item) => (
                 <button className={`quiz-history-item${selectedHistoryId === item.id ? " is-selected" : ""}`} key={item.id} type="button" onClick={() => setSelectedHistoryId(item.id)}>
                   <span>{item.title}</span>
-                  <small>{formatDateTime(item.createdAt)} · {item.source}</small>
+                  <small>{formatDateTime(item.createdAt)} - {item.source}</small>
                   <div className="journal-card-actions">
                     <Chip tone={item.status === "Completed" ? "success" : "neutral"}>{item.status}</Chip>
                     <strong>{item.score}</strong>
@@ -581,19 +504,24 @@ export function QuizPage() {
               ))}
             </div>
             <div className="quiz-history-detail">
-              
-              <h3>{selectedHistory.title}</h3>
-              <p>Độ khó: {selectedHistory.difficulty}. Trạng thái: {selectedHistory.status}.</p>
-              <div className="page-actions">
-                <Button variant="ghost" size="sm" icon={<RefreshCw size={15} />} onClick={() => activeQuiz && pollQuiz(activeQuiz.id)} disabled={!activeQuiz || isGenerating}>Kiểm tra lại</Button>
-                <Button variant="secondary" size="sm" onClick={openHistoryReview} disabled={!selectedAttempt || selectedAttempt.answers.length === 0}>Xem lại chi tiết</Button>
-              </div>
-              {selectedAttempt && selectedAttempt.answers.length > 0 && (
-                <div className="quiz-history-review">
-                  {selectedAttempt.answers.slice(0, 3).map((question, index) => (
-                    <p key={question.id}><strong>Câu {index + 1}:</strong> {question.isCorrect ? "Đúng" : "Sai"} - {question.prompt}</p>
-                  ))}
-                </div>
+              {selectedHistory ? (
+                <>
+                  <h3>{selectedHistory.title}</h3>
+                  <p>Độ khó: {selectedHistory.difficulty}. Trạng thái: {selectedHistory.status}.</p>
+                  <div className="page-actions">
+                    <Button variant="ghost" size="sm" icon={<RefreshCw size={15} />} onClick={() => activeQuiz && pollQuiz(activeQuiz.id)} disabled={!activeQuiz || isGenerating}>Kiểm tra lại</Button>
+                    <Button variant="secondary" size="sm" onClick={openHistoryReview} disabled={!selectedAttempt || selectedAttempt.answers.length === 0}>Xem lại chi tiết</Button>
+                  </div>
+                  {selectedAttempt && selectedAttempt.answers.length > 0 && (
+                    <div className="quiz-history-review">
+                      {selectedAttempt.answers.slice(0, 3).map((question, index) => (
+                        <p key={question.id}><strong>Câu {index + 1}:</strong> {question.isCorrect ? "Đúng" : "Sai"} - {question.prompt}</p>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p>Chọn một quiz trong lịch sử để xem lại chi tiết.</p>
               )}
             </div>
           </Card>

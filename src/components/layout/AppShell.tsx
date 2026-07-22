@@ -1,10 +1,9 @@
 import { BarChart3, Bell, Bot, CircleHelp, Home, LogOut, Menu, PenLine, Search, Settings, Sparkles, Trophy, X } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { journalEntries } from "../../data/mock/mockData";
 import { useAuth } from "../../features/auth/AuthContext";
-import { filterEntries } from "../../lib/search";
+import { searchLearningLogs, type SearchResultItem } from "../../features/search/searchApi";
 import { Button, IconButton } from "../ui";
 
 const navItems = [
@@ -51,10 +50,33 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [showLoginToast, setShowLoginToast] = useState(false);
   const [query, setQuery] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState<SearchResultItem[]>([]);
   const authMessage = (location.state as { authMessage?: string } | null)?.authMessage;
   const isJournalDetail = location.pathname.startsWith("/journal/") && location.pathname !== "/journal/new";
   const isJournalList = false;
-  const searchSuggestions = useMemo(() => filterEntries(journalEntries, query, "").slice(0, 4), [query]);
+  useEffect(() => {
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery) {
+      setSearchSuggestions([]);
+      return;
+    }
+
+    let ignore = false;
+    const timeout = window.setTimeout(() => {
+      searchLearningLogs({ q: normalizedQuery })
+        .then((results) => {
+          if (!ignore) setSearchSuggestions(results.slice(0, 4));
+        })
+        .catch(() => {
+          if (!ignore) setSearchSuggestions([]);
+        });
+    }, 250);
+
+    return () => {
+      ignore = true;
+      window.clearTimeout(timeout);
+    };
+  }, [query]);
 
   useEffect(() => {
     if (!auth.isAuthenticated || !auth.user || !authMessage) return;
@@ -101,7 +123,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 searchSuggestions.map((entry) => (
                   <Link key={entry.id} to={`/journal/${entry.id}`} role="option" onClick={() => setQuery("")}>
                     <strong>{entry.title}</strong>
-                    <span>{entry.summary}</span>
+                    <span>{entry.snippet}</span>
                   </Link>
                 ))
               ) : (

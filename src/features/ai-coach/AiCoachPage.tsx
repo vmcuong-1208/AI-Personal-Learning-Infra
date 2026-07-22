@@ -1,27 +1,9 @@
 import { CalendarDays, FileText, RefreshCw, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card, Chip, Input, PageHeader } from "../../components/ui";
-import { ApiClientError } from "../../lib/apiClient";
 import { createAiReport, getAiReportById, getAiReports, type AiReport, type AiReportStatus, type AiReportType } from "./aiCoachApi";
 
 type ReportPeriod = AiReportType;
-
-const fallbackReports: AiReport[] = [
-  {
-    id: "week-demo-2026",
-    title: "Weekly AI Report - Demo",
-    type: "weekly",
-    range: "17/06/2026 -> 23/06/2026",
-    startDate: "2026-06-17",
-    endDate: "2026-06-23",
-    createdAt: "2026-06-24T09:15:00.000Z",
-    status: "completed",
-    summary: "Tuần này bạn học đều hơn, ghi chú có nhiều ví dụ thực tế về queue, Redis và triển khai hệ thống. Các phần tốt nhất là khả năng liên hệ lỗi vận hành với cách thiết kế retry an toàn.",
-    strengths: ["Ghi lại bối cảnh lỗi rõ ràng", "Biết so sánh nhiều phương án triển khai", "Có thói quen tóm tắt sau mỗi lab"],
-    weaknesses: ["Một số ghi chú command còn thiếu kết quả đầu ra", "Chưa phân biệt thật chắc readiness và liveness probe"],
-    recommendations: ["Thêm phần kết quả mong đợi cho từng command", "Ôn lại Kubernetes probes bằng 5 tình huống lỗi", "Tạo quiz ngắn ngay sau mỗi nhật ký quan trọng"]
-  }
-];
 
 const statusLabels: Record<AiReportStatus, string> = {  pending: "Đang chờ",
   processing: "Đang xử lý",
@@ -95,9 +77,7 @@ function formatDateTime(value: string) {
   return date.toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" });
 }
 
-function isFallbackAllowed(error: unknown) {
-  return error instanceof ApiClientError && (error.code === "CONFIG_ERROR" || error.code === "AUTH_REQUIRED" || error.code === "UNAUTHORIZED");
-}
+
 
 export function AiCoachPage() {
   const [period, setPeriod] = useState<ReportPeriod>("weekly");
@@ -123,14 +103,9 @@ export function AiCoachPage() {
       setReports(nextReports);
       setSelectedReportId((current) => nextReports.some((report) => report.id === current) ? current : nextReports[0]?.id ?? "");
     } catch (nextError) {
-      if (!isFallbackAllowed(nextError)) {
-        setError(nextError instanceof Error ? nextError.message : "Không tải được danh sách báo cáo AI.");
-        setReports([]);
-        setSelectedReportId("");
-      } else {
-        setReports(fallbackReports);
-        setSelectedReportId(fallbackReports[0].id);
-      }
+      setError(nextError instanceof Error ? nextError.message : "Khong tai duoc danh sach bao cao AI.");
+      setReports([]);
+      setSelectedReportId("");
     } finally {
       setIsLoadingReports(false);
     }
@@ -179,13 +154,11 @@ export function AiCoachPage() {
       setSelectedReportId(createdReport.id);
       pollReport(createdReport.id);
     } catch (nextError) {
-      if (isFallbackAllowed(nextError)) {
-        setIsGenerating(false);        setBanner("Đang hiển thị báo cáo mẫu vì chưa có dữ liệu cá nhân để tạo báo cáo mới.");
-        return;
-      }
-      setIsGenerating(false);      setError(nextError instanceof Error ? nextError.message : "Không tạo được yêu cầu báo cáo AI.");
+      setIsGenerating(false);
+      setError(nextError instanceof Error ? nextError.message : "Khong tao duoc yeu cau bao cao AI.");
     }
   }
+
 
   return (
     <>

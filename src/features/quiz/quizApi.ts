@@ -83,6 +83,12 @@ type BackendQuiz = {
   questions?: BackendQuestion[];
 };
 
+type BackendQuizList = BackendQuiz[] | {
+  items?: BackendQuiz[];
+  quizzes?: BackendQuiz[];
+  data?: BackendQuiz[];
+};
+
 type BackendAttemptQuestion = BackendQuestion & {
   userAnswer?: number;
   user_answer?: number;
@@ -197,6 +203,11 @@ function normalizeAttempt(attempt: BackendAttempt): QuizAttempt {
   };
 }
 
+function readQuizList(response: BackendQuizList) {
+  if (Array.isArray(response)) return response;
+  return response.items ?? response.quizzes ?? response.data ?? [];
+}
+
 function readAttemptList(response: BackendAttemptList) {
   if (Array.isArray(response)) return response;
   return response.items ?? response.attempts ?? response.data ?? [];
@@ -218,6 +229,12 @@ export function createQuiz(payload: CreateQuizPayload) {
       difficulty: payload.difficulty.toLowerCase()
     })
   }).then(normalizeQuiz);
+}
+
+export function getQuizzes() {
+  return apiRequest<BackendQuizList>("/quiz")
+    .then((response) => readQuizList(response).map(normalizeQuiz).filter((quiz) => quiz.id))
+    .then((quizzes) => quizzes.sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
 }
 
 export function getQuizById(id: string) {
