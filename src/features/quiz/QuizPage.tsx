@@ -119,6 +119,7 @@ export function QuizPage() {
   const [selectedHistoryId, setSelectedHistoryId] = useState("");
   const [historyItems, setHistoryItems] = useState<QuizHistoryItem[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [historyError, setHistoryError] = useState("");
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
   const [quizStatus, setQuizStatus] = useState<QuizStatus>("pending");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -212,6 +213,7 @@ export function QuizPage() {
 
   const loadQuizHistory = useCallback(async () => {
     setIsLoadingHistory(true);
+    setHistoryError("");
     try {
       const quizzes = await getQuizzes();
       const attemptsByQuiz: Record<string, QuizAttempt> = {};
@@ -486,7 +488,10 @@ export function QuizPage() {
                   <p>Đang tải lịch sử quiz...</p>
                 </div>
               )}
-              {!isLoadingHistory && historyItems.length === 0 && (
+              {!isLoadingHistory && historyError && (
+                <div className="settings-message settings-message-error" role="alert">{historyError}</div>
+              )}
+              {!isLoadingHistory && !historyError && historyItems.length === 0 && (
                 <div className="search-empty">
                   <History size={30} />
                   <p>Chưa có lịch sử quiz. Tạo quiz mới để xem lại kết quả ở đây.</p>
