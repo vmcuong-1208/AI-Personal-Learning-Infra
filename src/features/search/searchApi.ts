@@ -25,8 +25,11 @@ type BackendSearchResult = {
   entry_id?: string;
   title?: string;
   topic?: string;
+  Topic?: string;
   category?: string;
+  Category?: string;
   tags?: unknown;
+  Tags?: unknown;
   date?: string;
   createdAt?: string;
   created_at?: string;
@@ -47,7 +50,33 @@ function readString(value: unknown, fallback = "") {
 }
 
 function readTags(value: unknown) {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string");
+  if (typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
+  return [];
+}
+
+function normalizeText(value: string) {
+  return value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function matchesText(value: string, query: string) {
+  if (!query.trim()) return true;
+  return normalizeText(value).includes(normalizeText(query));
+}
+
+function resultMatchesFilters(result: SearchResultItem, filters: SearchFilters) {
+  const topic = filters.topic?.trim() ?? "";
+  const tags = filters.tags ?? [];
+  const from = filters.from?.trim() ?? "";
+  const to = filters.to?.trim() ?? "";
+  const searchableTopic = [result.topic, result.title, result.snippet, ...result.tags].join(" ");
+
+  if (topic && !matchesText(searchableTopic, topic)) return false;
+  if (tags.length > 0 && !tags.every((tag) => result.tags.some((item) => normalizeText(item) === normalizeText(tag)))) return false;
+  if (from && result.date < from) return false;
+  if (to && result.date > to) return false;
+
+  return true;
 }
 
 function readResults(response: BackendSearchResponse | BackendSearchResult[]) {
@@ -62,8 +91,8 @@ function normalizeSearchResult(result: BackendSearchResult): SearchResultItem {
   return {
     id,
     title: readString(result.title, "Untitled journal log"),
-    topic: readString(result.topic ?? result.category, "Khac"),
-    tags: readTags(result.tags),
+    topic: readString(result.topic ?? result.Topic ?? result.category ?? result.Category, "Khac"),
+    tags: readTags(result.tags ?? result.Tags),
     date: readString(result.date, createdDate || new Date().toISOString().slice(0, 10)),
     snippet: readString(result.snippet ?? result.summary ?? result.content)
   };
@@ -84,8 +113,21 @@ export function buildSearchPath(filters: SearchFilters) {
   return query ? `/search?${query}` : "/search";
 }
 
+function buildBroadSearchPath(filters: SearchFilters) {
+  const params = new URLSearchParams();
+  const q = filters.q?.trim();
+
+  if (q) params.set("q", q);
+  if (filters.from) params.set("from", filters.from);
+  if (filters.to) params.set("to", filters.to);
+
+  const query = params.toString();
+  return query ? `/search?${query}` : "/search";
+}
+
 export function searchLearningLogs(filters: SearchFilters) {
-  return apiRequest<BackendSearchResponse | BackendSearchResult[]>(buildSearchPath(filters))
+  return apiRequest<BackendSearchResponse | BackendSearchResult[]>(buildBroadSearchPath(filters))
     .then((response) => readResults(response).map(normalizeSearchResult).filter((result) => result.id))
+    .then((results) => results.filter((result) => resultMatchesFilters(result, filters)))
     .then((results) => results.sort((a, b) => b.date.localeCompare(a.date)));
 }

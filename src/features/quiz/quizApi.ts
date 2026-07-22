@@ -1,6 +1,6 @@
 import { apiRequest } from "../../lib/apiClient";
 
-export type QuizSource = "week" | "month" | "topic";
+export type QuizSource = "day" | "week" | "month" | "topic";
 export type QuizDifficulty = "Easy" | "Medium" | "Hard";
 export type QuizStatus = "pending" | "processing" | "completed" | "failed";
 
@@ -31,6 +31,13 @@ export type CreateQuizPayload = {
   topic: string;
   questionCount: number;
   difficulty: QuizDifficulty;
+  startDate?: string;
+  endDate?: string;
+};
+
+export type GradedQuestion = PracticeQuestion & {
+  userAnswer: number;
+  isCorrect: boolean;
 };
 
 export type QuizAttempt = {
@@ -39,6 +46,7 @@ export type QuizAttempt = {
   score: number;
   totalQuestions: number;
   submittedAt: string;
+  answers: GradedQuestion[];
 };
 
 type BackendQuestion = {
@@ -75,6 +83,13 @@ type BackendQuiz = {
   questions?: BackendQuestion[];
 };
 
+type BackendAttemptQuestion = BackendQuestion & {
+  userAnswer?: number;
+  user_answer?: number;
+  isCorrect?: boolean;
+  is_correct?: boolean;
+};
+
 type BackendAttempt = {
   id?: string;
   attemptId?: string;
@@ -86,6 +101,13 @@ type BackendAttempt = {
   total_questions?: number;
   submittedAt?: string;
   submitted_at?: string;
+  answers?: BackendAttemptQuestion[];
+};
+
+type BackendAttemptList = BackendAttempt[] | {
+  items?: BackendAttempt[];
+  attempts?: BackendAttempt[];
+  data?: BackendAttempt[];
 };
 
 function readString(value: unknown, fallback = "") {
@@ -107,7 +129,8 @@ function readStatus(value: unknown): QuizStatus {
 }
 
 function readSource(value: unknown): QuizSource {
-  if (value === "week" || value === "month" || value === "topic") return value;
+  if (value === "day" || value === "week" || value === "month" || value === "topic") return value;
+  if (value === "daily") return "day";
   if (value === "weekly") return "week";
   if (value === "monthly") return "month";
   return "topic";
@@ -154,14 +177,29 @@ function normalizeQuiz(quiz: BackendQuiz): Quiz {
   };
 }
 
+function normalizeAttemptQuestion(question: BackendAttemptQuestion, index: number): GradedQuestion {
+  return {
+    ...normalizeQuestion(question, index),
+    userAnswer: readNumber(question.userAnswer ?? question.user_answer, -1),
+    isCorrect: Boolean(question.isCorrect ?? question.is_correct)
+  };
+}
+
 function normalizeAttempt(attempt: BackendAttempt): QuizAttempt {
+  const answers = Array.isArray(attempt.answers) ? attempt.answers.map(normalizeAttemptQuestion) : [];
   return {
     id: readString(attempt.id ?? attempt.attemptId ?? attempt.attempt_id),
     quizId: readString(attempt.quizId ?? attempt.quiz_id),
     score: readNumber(attempt.score),
-    totalQuestions: readNumber(attempt.totalQuestions ?? attempt.total_questions),
-    submittedAt: readString(attempt.submittedAt ?? attempt.submitted_at)
+    totalQuestions: readNumber(attempt.totalQuestions ?? attempt.total_questions, answers.length),
+    submittedAt: readString(attempt.submittedAt ?? attempt.submitted_at),
+    answers
   };
+}
+
+function readAttemptList(response: BackendAttemptList) {
+  if (Array.isArray(response)) return response;
+  return response.items ?? response.attempts ?? response.data ?? [];
 }
 
 export function createQuiz(payload: CreateQuizPayload) {
@@ -171,6 +209,10 @@ export function createQuiz(payload: CreateQuizPayload) {
       source_type: payload.sourceType,
       sourceType: payload.sourceType,
       topic: payload.topic,
+      start_date: payload.startDate,
+      startDate: payload.startDate,
+      end_date: payload.endDate,
+      endDate: payload.endDate,
       question_count: payload.questionCount,
       questionCount: payload.questionCount,
       difficulty: payload.difficulty.toLowerCase()
@@ -187,4 +229,10 @@ export function submitQuizAttempt(quizId: string, answers: number[]) {
     method: "POST",
     body: JSON.stringify({ answers })
   }).then(normalizeAttempt);
+}
+
+export function getQuizAttempts(quizId: string) {
+  return apiRequest<BackendAttemptList>(`/quiz/${encodeURIComponent(quizId)}/attempts`)
+    .then((response) => readAttemptList(response).map(normalizeAttempt))
+    .then((attempts) => attempts.sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)));
 }

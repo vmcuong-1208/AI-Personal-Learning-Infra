@@ -106,8 +106,8 @@ export function AiCoachPage() {
   const [isLoadingReports, setIsLoadingReports] = useState(true);
   const [banner, setBanner] = useState("");
   const [error, setError] = useState("");
-  const [reports, setReports] = useState<AiReport[]>(fallbackReports);
-  const [selectedReportId, setSelectedReportId] = useState(fallbackReports[0].id);
+  const [reports, setReports] = useState<AiReport[]>([]);
+  const [selectedReportId, setSelectedReportId] = useState("");
   const pollTimerRef = useRef<number | null>(null);
 
   const selectedReport = useMemo(
@@ -120,13 +120,16 @@ export function AiCoachPage() {
     setError("");
     try {
       const nextReports = await getAiReports();
-      if (nextReports.length > 0) {
-        setReports(nextReports);
-        setSelectedReportId((current) => nextReports.some((report) => report.id === current) ? current : nextReports[0].id);
-      }
+      setReports(nextReports);
+      setSelectedReportId((current) => nextReports.some((report) => report.id === current) ? current : nextReports[0]?.id ?? "");
     } catch (nextError) {
       if (!isFallbackAllowed(nextError)) {
         setError(nextError instanceof Error ? nextError.message : "Không tải được danh sách báo cáo AI.");
+        setReports([]);
+        setSelectedReportId("");
+      } else {
+        setReports(fallbackReports);
+        setSelectedReportId(fallbackReports[0].id);
       }
     } finally {
       setIsLoadingReports(false);
@@ -241,6 +244,12 @@ export function AiCoachPage() {
 
             <div className="report-list">
               {isLoadingReports && <p>Đang tải danh sách báo cáo...</p>}
+              {!isLoadingReports && reports.length === 0 && (
+                <div className="search-empty">
+                  <FileText size={30} />
+                  <p>Chưa có báo cáo AI nào. Tạo báo cáo mới để xem kết quả phân tích từ nhật ký của bạn.</p>
+                </div>
+              )}
               {!isLoadingReports && reports.map((report) => (
                 <article className={`report-item ${selectedReportId === report.id ? "is-selected" : ""}`} key={report.id}>
                   <div className="report-item-icon"><FileText size={18} /></div>

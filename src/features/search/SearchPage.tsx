@@ -15,9 +15,15 @@ const rangeLabels: Record<RangePreset, string> = {
   custom: "Tùy chỉnh"
 };
 
-const topicOptions = ["Networking", "Security", "Monitoring", "DevOps", "AI", "Programming"];
+const topicOptions = ["AWS", "VPC", "IAM", "CloudWatch", "NAT Gateway", "VPN", "Networking", "Security", "Monitoring", "DevOps", "AI", "Programming"];
 const commonTags = ["AWS", "VPC", "NAT Gateway", "CloudWatch", "IAM", "VPN"];
 const topicLabels: Record<string, string> = {
+  aws: "AWS",
+  vpc: "VPC",
+  iam: "IAM",
+  cloudwatch: "CloudWatch",
+  "nat gateway": "NAT Gateway",
+  vpn: "VPN",
   networking: "Networking",
   security: "Security",
   monitoring: "Monitoring",

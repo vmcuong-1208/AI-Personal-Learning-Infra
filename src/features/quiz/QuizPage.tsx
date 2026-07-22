@@ -2,7 +2,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Clock3, History, RefreshCw, Sparkl
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card, Chip, Input, PageHeader, ProgressBar } from "../../components/ui";
 import { ApiClientError } from "../../lib/apiClient";
-import { createQuiz, getQuizById, submitQuizAttempt, type PracticeQuestion, type Quiz, type QuizDifficulty, type QuizSource, type QuizStatus } from "./quizApi";
+import { createQuiz, getQuizAttempts, getQuizById, submitQuizAttempt, type PracticeQuestion, type Quiz, type QuizAttempt, type QuizDifficulty, type QuizSource, type QuizStatus } from "./quizApi";
 
 type QuizHistoryItem = {
   id: string;
@@ -15,12 +15,13 @@ type QuizHistoryItem = {
 };
 
 const sourceLabels: Record<QuizSource, string> = {
+  day: "Nhật ký ngày đã chọn",
   week: "Nhật ký tuần này",
   month: "Nhật ký tháng này",
   topic: "Chủ đề cụ thể"
 };
 
-const topicOptions = ["AWS", "VPC", "IAM", "CloudWatch", "Networking", "Security", "Monitoring", "DevOps", "AI", "Programming"];
+const topicOptions = ["AWS", "VPC", "IAM", "CloudWatch", "NAT Gateway", "VPN", "Networking", "Security", "Monitoring", "DevOps", "AI", "Programming", "custom"];
 const POLL_INTERVAL_MS = 3000;
 const MAX_POLL_ATTEMPTS = 40;
 
@@ -123,6 +124,40 @@ function formatDateTime(value: string) {
   return date.toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" });
 }
 
+function toDateInputValue(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function parseWeekInput(value: string) {
+  const match = value.match(/^(\d{4})-W(\d{2})$/);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const week = Number(match[2]);
+  const firstThursday = new Date(Date.UTC(year, 0, 4));
+  const firstMonday = addDays(firstThursday, -(firstThursday.getUTCDay() || 7) + 1);
+  return addDays(firstMonday, (week - 1) * 7);
+}
+
+function resolveQuizRange(source: QuizSource, sourceDate: string, topicFrom: string, topicTo: string) {
+  if (source === "topic") return { startDate: topicFrom || undefined, endDate: topicTo || undefined };
+  if (!sourceDate) return {};
+  if (source === "day") return { startDate: sourceDate, endDate: sourceDate };
+  if (source === "week") {
+    const start = parseWeekInput(sourceDate);
+    return start ? { startDate: toDateInputValue(start), endDate: toDateInputValue(addDays(start, 6)) } : {};
+  }
+  const start = new Date(`${sourceDate}-01T00:00:00`);
+  if (Number.isNaN(start.getTime())) return {};
+  const end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+  return { startDate: toDateInputValue(start), endDate: toDateInputValue(end) };
+}
+
 function isFallbackAllowed(error: unknown) {
   return error instanceof ApiClientError && (error.code === "CONFIG_ERROR" || error.code === "AUTH_REQUIRED" || error.code === "UNAUTHORIZED");
 }
@@ -158,6 +193,7 @@ export function QuizPage() {
   const [questionCount, setQuestionCount] = useState(5);
   const [difficulty, setDifficulty] = useState<QuizDifficulty>("Medium");
   const [topic, setTopic] = useState("AWS");
+  const [customTopic, setCustomTopic] = useState("");
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [submitted, setSubmitted] = useState(false);
   const [started, setStarted] = useState(false);
@@ -170,12 +206,15 @@ export function QuizPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attemptScore, setAttemptScore] = useState<number | null>(null);
+  const [attemptDetails, setAttemptDetails] = useState<Record<string, QuizAttempt>>({});
   const [banner, setBanner] = useState("");
   const [error, setError] = useState("");
   const pollTimerRef = useRef<number | null>(null);
 
-  const source: QuizSource = sourceMode === "topic" ? "topic" : cycle === "month" ? "month" : "week";
+  const source: QuizSource = sourceMode === "topic" ? "topic" : cycle;
+  const selectedTopic = topic === "custom" ? customTopic.trim() : topic;
   const selectedHistory = historyItems.find((item) => item.id === selectedHistoryId) ?? historyItems[0];
+  const selectedAttempt = selectedHistoryId ? attemptDetails[selectedHistoryId] : undefined;
   const questions = activeQuiz?.questions ?? buildQuizQuestions(questionCount);
   const currentQuestion = questions[currentIndex] ?? questions[0];
   const answeredCount = questions.filter((question) => answers[question.id] !== undefined).length;
@@ -232,6 +271,12 @@ export function QuizPage() {
           return;
         }
 
+        if (nextQuiz.status === "completed" && nextQuiz.questions.length === 0) {
+          setIsGenerating(false);
+          setError("Không tìm thấy nhật ký phù hợp để tạo quiz. Hãy đổi khoảng thời gian, chủ đề hoặc thẻ rồi thử lại.");
+          return;
+        }
+
         if (nextQuiz.status === "failed" || attempt >= MAX_POLL_ATTEMPTS) {
           setIsGenerating(false);
           setError("Quiz chưa sẵn sàng. Vui lòng thử lại sau ít phút.");
@@ -247,6 +292,26 @@ export function QuizPage() {
   }, [startQuiz, stopPolling, upsertHistory]);
 
   useEffect(() => stopPolling, [stopPolling]);
+
+  useEffect(() => {
+    if (!banner || isGenerating) return;
+    const timeout = window.setTimeout(() => setBanner(""), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [banner, isGenerating]);
+
+  useEffect(() => {
+    if (!selectedHistoryId || selectedHistoryId.startsWith("quiz-demo-") || attemptDetails[selectedHistoryId]) return;
+    let ignore = false;
+    getQuizAttempts(selectedHistoryId)
+      .then((attempts) => {
+        const latestAttempt = attempts[0];
+        if (!ignore && latestAttempt) setAttemptDetails((current) => ({ ...current, [selectedHistoryId]: latestAttempt }));
+      })
+      .catch(() => undefined);
+    return () => {
+      ignore = true;
+    };
+  }, [attemptDetails, selectedHistoryId]);
 
   useEffect(() => {
     if (!started || submitted) return;
@@ -269,22 +334,30 @@ export function QuizPage() {
     setError("");
 
     try {
+      const quizRange = resolveQuizRange(source, sourceDate, topicFrom, topicTo);
       const createdQuiz = await createQuiz({
         sourceType: source,
-        topic: source === "topic" ? topic : sourceLabels[source],
+        topic: source === "topic" ? selectedTopic || "General" : sourceLabels[source],
         questionCount,
-        difficulty
+        difficulty,
+        ...quizRange
       });
       upsertHistory(createdQuiz);
       if (createdQuiz.status === "completed" && createdQuiz.questions.length > 0) {
         setIsGenerating(false);
+        setBanner("Quiz AI đã sẵn sàng. Bạn có thể bắt đầu làm bài.");
         startQuiz(createdQuiz);
+        return;
+      }
+      if (createdQuiz.status === "completed" && createdQuiz.questions.length === 0) {
+        setIsGenerating(false);
+        setError("Không tìm thấy nhật ký phù hợp để tạo quiz. Hãy đổi khoảng thời gian, chủ đề hoặc thẻ rồi thử lại.");
         return;
       }
       pollQuiz(createdQuiz.id);
     } catch (nextError) {
       if (isFallbackAllowed(nextError)) {
-        const demoQuiz = buildFallbackQuiz(source, topic, questionCount, difficulty);
+        const demoQuiz = buildFallbackQuiz(source, selectedTopic || topic, questionCount, difficulty);
         setIsGenerating(false);
         setBanner("Đang mở quiz mẫu vì chưa có đủ dữ liệu cá nhân để tạo quiz mới.");
         upsertHistory(demoQuiz, "Completed");
@@ -333,16 +406,67 @@ export function QuizPage() {
         const orderedAnswers = activeQuiz.questions.map((question) => answers[question.id] ?? -1);
         const attempt = await submitQuizAttempt(activeQuiz.id, orderedAnswers);
         setAttemptScore(attempt.score);
+        setAttemptDetails((current) => ({ ...current, [activeQuiz.id]: attempt }));
         upsertHistory(activeQuiz, "Completed", `${attempt.score}/${attempt.totalQuestions || activeQuiz.questions.length}`);
       } else {
+        const demoAttempt: QuizAttempt = {
+          id: `att-demo-${Date.now()}`,
+          quizId: activeQuiz.id,
+          score: localCorrectCount,
+          totalQuestions: questions.length,
+          submittedAt: new Date().toISOString(),
+          answers: activeQuiz.questions.map((question) => ({
+            ...question,
+            userAnswer: answers[question.id] ?? -1,
+            isCorrect: answers[question.id] === question.answerIndex
+          }))
+        };
+        setAttemptDetails((current) => ({ ...current, [activeQuiz.id]: demoAttempt }));
         upsertHistory(activeQuiz, "Completed", `${localCorrectCount}/${questions.length}`);
       }
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Không nộp được bài quiz lên backend. Kết quả tạm tính vẫn hiển thị ở frontend.");
+      const localAttempt: QuizAttempt = {
+        id: `att-local-${Date.now()}`,
+        quizId: activeQuiz.id,
+        score: localCorrectCount,
+        totalQuestions: questions.length,
+        submittedAt: new Date().toISOString(),
+        answers: activeQuiz.questions.map((question) => ({
+          ...question,
+          userAnswer: answers[question.id] ?? -1,
+          isCorrect: answers[question.id] === question.answerIndex
+        }))
+      };
+      setAttemptDetails((current) => ({ ...current, [activeQuiz.id]: localAttempt }));
       upsertHistory(activeQuiz, "Completed", `${localCorrectCount}/${questions.length}`);
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function openHistoryReview() {
+    if (!selectedHistory || !selectedAttempt || selectedAttempt.answers.length === 0) return;
+    const reviewQuestions = selectedAttempt.answers.map(({ userAnswer, isCorrect, ...question }) => question);
+    setActiveQuiz({
+      id: selectedHistory.id,
+      title: selectedHistory.title,
+      sourceType: "topic",
+      topic: selectedHistory.source,
+      questionCount: reviewQuestions.length,
+      difficulty: selectedHistory.difficulty,
+      status: "completed",
+      createdAt: selectedHistory.createdAt,
+      questions: reviewQuestions
+    });
+    setAnswers(Object.fromEntries(selectedAttempt.answers.map((question) => [question.id, question.userAnswer])));
+    setAttemptScore(selectedAttempt.score);
+    setSubmitted(true);
+    setStarted(true);
+    setCurrentIndex(0);
+    setTimeLeft(0);
+    setBanner("");
+    setError("");
   }
 
   if (!started) {
@@ -398,9 +522,15 @@ export function QuizPage() {
                   <div className="form-field">
                     <label htmlFor="quiz-topic">Chủ đề / thẻ</label>
                     <select id="quiz-topic" className="input" value={topic} onChange={(event) => setTopic(event.target.value)}>
-                      {topicOptions.map((item) => <option key={item} value={item}>{item}</option>)}
+                      {topicOptions.map((item) => <option key={item} value={item}>{item === "custom" ? "Nhập chủ đề / thẻ khác" : item}</option>)}
                     </select>
                   </div>
+                  {topic === "custom" && (
+                    <div className="form-field">
+                      <label htmlFor="quiz-custom-topic">Chủ đề / thẻ tự nhập</label>
+                      <Input id="quiz-custom-topic" value={customTopic} onChange={(event) => setCustomTopic(event.target.value)} placeholder="Ví dụ: serverless" />
+                    </div>
+                  )}
                   <div className="form-field">
                     <label htmlFor="quiz-topic-from">Từ ngày</label>
                     <Input id="quiz-topic-from" type="date" value={topicFrom} onChange={(event) => setTopicFrom(event.target.value)} />
@@ -454,7 +584,17 @@ export function QuizPage() {
               
               <h3>{selectedHistory.title}</h3>
               <p>Độ khó: {selectedHistory.difficulty}. Trạng thái: {selectedHistory.status}.</p>
-              <Button variant="ghost" size="sm" icon={<RefreshCw size={15} />} onClick={() => activeQuiz && pollQuiz(activeQuiz.id)} disabled={!activeQuiz || isGenerating}>Kiểm tra lại</Button>
+              <div className="page-actions">
+                <Button variant="ghost" size="sm" icon={<RefreshCw size={15} />} onClick={() => activeQuiz && pollQuiz(activeQuiz.id)} disabled={!activeQuiz || isGenerating}>Kiểm tra lại</Button>
+                <Button variant="secondary" size="sm" onClick={openHistoryReview} disabled={!selectedAttempt || selectedAttempt.answers.length === 0}>Xem lại chi tiết</Button>
+              </div>
+              {selectedAttempt && selectedAttempt.answers.length > 0 && (
+                <div className="quiz-history-review">
+                  {selectedAttempt.answers.slice(0, 3).map((question, index) => (
+                    <p key={question.id}><strong>Câu {index + 1}:</strong> {question.isCorrect ? "Đúng" : "Sai"} - {question.prompt}</p>
+                  ))}
+                </div>
+              )}
             </div>
           </Card>
         </div>
@@ -514,7 +654,7 @@ export function QuizPage() {
                 <h2>{correctCount} đúng, {wrongCount} sai</h2>
                 <p>{answers[currentQuestion.id] === currentQuestion.answerIndex ? "Bạn đã chọn đúng câu này." : "Câu này cần ôn lại."}</p>
               </div>
-              <div className="quiz-explanation">
+              <div className={`quiz-explanation${answers[currentQuestion.id] === currentQuestion.answerIndex ? " is-correct" : " is-wrong"}`}>
                 {answers[currentQuestion.id] === currentQuestion.answerIndex ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
                 <p>{currentQuestion.explanation}</p>
               </div>
@@ -533,7 +673,7 @@ export function QuizPage() {
                 const answered = answers[question.id] !== undefined;
                 return (
                   <button
-                    className={`quiz-number-button${currentIndex === index ? " is-current" : ""}${answered ? " is-answered" : ""}`}
+                    className={`quiz-number-button${currentIndex === index ? " is-current" : ""}${answered ? " is-answered" : ""}${submitted && answered && answers[question.id] === question.answerIndex ? " is-correct" : ""}${submitted && answered && answers[question.id] !== question.answerIndex ? " is-wrong" : ""}`}
                     key={question.id}
                     type="button"
                     onClick={() => goToQuestion(index)}
