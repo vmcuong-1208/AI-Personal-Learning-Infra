@@ -1298,6 +1298,28 @@ button, input, textarea, select { font: inherit; }
   color: var(--muted);
   font-weight: 750;
 }
+.quiz-history-list {
+  max-height: clamp(320px, 48vh, 430px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+}
+
+.quiz-history-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.quiz-history-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #c7c4d8;
+}
+
+.quiz-history-list::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: #f5f3ff;
+}
+
 .quiz-history-item {
   display: grid;
   gap: 7px;
